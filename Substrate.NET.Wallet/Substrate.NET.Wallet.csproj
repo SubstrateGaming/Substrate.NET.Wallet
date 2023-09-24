@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<PackageId>Substrate.NET.Wallet</PackageId>
+		<TargetFrameworks>netstandard2.0;netstandard2.1;net6.0</TargetFrameworks>
+		<Version>1.0.0</Version>
+		<Company>BloGa Tech AG</Company>
+		<Authors>Cedric Decoster</Authors>
+		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+		<Description>Substrate .NET Wallet Integration</Description>
+		<PackageProjectUrl>https://ajuna.io</PackageProjectUrl>
+		<PackageLicenseFile>LICENSE</PackageLicenseFile>
+		<RepositoryUrl>https://github.com/ajuna-network/Ajuna.NetWallet</RepositoryUrl>
+		<RepositoryType>git</RepositoryType>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<None Include="..\LICENSE">
+			<Pack>True</Pack>
+			<PackagePath></PackagePath>
+		</None>
+	</ItemGroup>
+
+	<ItemGroup>
+	  <PackageReference Include="Substrate.NET.API" Version="0.9.9" />
+	</ItemGroup>
+
+</Project>

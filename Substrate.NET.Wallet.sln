@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.2.32602.215
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Substrate.NET.Wallet", "Substrate.NET.Wallet\Substrate.NET.Wallet.csproj", "{FCA82FA9-C723-4C1F-B05E-620EA8876855}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Substrate.NET.Wallet.Test", "Substrate.NET.Wallet.Test\Substrate.NET.Wallet.Test.csproj", "{02DDCC1C-B34D-4480-9188-82A3DD5FB957}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{FCA82FA9-C723-4C1F-B05E-620EA8876855}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FCA82FA9-C723-4C1F-B05E-620EA8876855}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FCA82FA9-C723-4C1F-B05E-620EA8876855}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FCA82FA9-C723-4C1F-B05E-620EA8876855}.Release|Any CPU.Build.0 = Release|Any CPU
+		{02DDCC1C-B34D-4480-9188-82A3DD5FB957}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{02DDCC1C-B34D-4480-9188-82A3DD5FB957}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{02DDCC1C-B34D-4480-9188-82A3DD5FB957}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{02DDCC1C-B34D-4480-9188-82A3DD5FB957}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {9C3AE735-AD05-4DB7-8C82-0BEB8C540657}
+	EndGlobalSection
+EndGlobal

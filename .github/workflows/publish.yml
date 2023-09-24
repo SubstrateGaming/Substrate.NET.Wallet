@@ -1,0 +1,60 @@
+name: publish
+
+on:
+  push:
+    branches: [ master ]
+
+jobs:
+  build:
+    name: build & test & publish
+    runs-on: ubuntu-latest
+        
+    steps:
+      - uses: actions/checkout@v2
+
+      ##
+      # Setup
+      # Setup multiple .NET versions so we can build against all referenced .NET versions.
+      ##
+      - name: Setup .NET Core 2.1.x
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: 2.1.x
+     
+      - name: Setup .NET Core 3.1.x
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: 3.1.x
+
+      - name: Setup .NET 6.0.x
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: 6.0.x
+
+      
+      ##
+      # Dependencies
+      # Restore the project and its dependencies.
+      ##
+      - name: Install dependencies
+        run: dotnet restore
+      
+      # Test
+      - name: Test
+        run: |
+            cd Substrate.NET.Wallet.Test
+            dotnet test --no-restore --verbosity normal
+
+      ##
+      # Publish
+      ##
+      - name: Publish Substrate.NET.Wallet
+        id: publish_nuget_1
+        uses: alirezanet/publish-nuget@v3.0.4
+        with:
+          # Filepath of the project to be packaged, relative to root of repository
+          PROJECT_FILE_PATH: Substrate.NET.Wallet/Substrate.NET.Wallet.csproj
+          # NuGet package id, used for version detection & defaults to project name
+          PACKAGE_NAME: Substrate.NET.Wallet
+          # API key to authenticate with NuGet server
+          NUGET_KEY: ${{secrets.NUGET_API_KEY}}
