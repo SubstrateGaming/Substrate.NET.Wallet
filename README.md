@@ -1,8 +1,8 @@
-# Ajuna.NetWallet (NETStandard2.0)
-*Ajuna .NET WALLET For substrate-based nodes*  
-![Build](https://github.com/ajuna-network/Ajuna.NetWallet/actions/workflows/build.yml/badge.svg)
-[![Nuget](https://img.shields.io/nuget/v/Ajuna.NetWallet)](https://www.nuget.org/packages/Ajuna.NetWallet/)
-[![GitHub issues](https://img.shields.io/github/issues/ajuna-network/Ajuna.NetWallet.svg)](https://github.com/ajuna-network/Ajuna.NetWallet/issues)
-[![license](https://img.shields.io/github/license/ajuna-network/Ajuna.NetWallet)](https://github.com/ajuna-network/Ajuna.NetWallet/blob/origin/LICENSE)
-[![contributors](https://img.shields.io/github/contributors/ajuna-network/Ajuna.NetWallet)](https://github.com/ajuna-network/Ajuna.NetWallet/graphs/contributors)  
+# Substrate .NET Wallet (NETStandard2.0, NETStandard2.1, NET6.0)
+*Substrate .NET WALLET For substrate-based nodes*  
+![Build](https://github.com/SubstrateGaming/Substrate.NET.Wallet/actions/workflows/build.yml/badge.svg)
+[![Nuget](https://img.shields.io/nuget/v/Substrate.NET.Wallet)](https://www.nuget.org/packages/Substrate.NET.Wallet/)
+[![GitHub issues](https://img.shields.io/github/issues/SubstrateGaming/Substrate.NET.Wallet.svg)](https://github.com/SubstrateGaming/Substrate.NET.Wallet/issues)
+[![license](https://img.shields.io/github/license/SubstrateGaming/Substrate.NET.Wallet)](https://github.com/SubstrateGaming/Substrate.NET.Wallet/blob/origin/LICENSE)
+[![contributors](https://img.shields.io/github/contributors/SubstrateGaming/Substrate.NET.Wallet)](https://github.com/SubstrateGaming/Substrate.NET.Wallet/graphs/contributors)  
  
