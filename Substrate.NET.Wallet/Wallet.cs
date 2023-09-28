@@ -4,6 +4,7 @@ using Schnorrkel.Keys;
 using Serilog;
 using Substrate.NetApi;
 using Substrate.NetApi.Model.Types;
+using Substrate.NetApi.Sign;
 using System;
 using System.Linq;
 using System.Security.Cryptography;
@@ -24,7 +25,7 @@ namespace Substrate.NET.Wallet
 
         private const string DefaultWalletName = "wallet";
 
-        private readonly Random _random = new Random();
+        private readonly RandomNumberGenerator _random = RandomNumberGenerator.Create();
 
         private FileStore _walletFile;
 
@@ -119,7 +120,7 @@ namespace Substrate.NET.Wallet
         /// <param name="mnemonic">The mnemonic.</param>
         /// <param name="walletName">Name of the wallet.</param>
         /// <returns></returns>
-        public bool Create(string password, string mnemonic, KeyType keyType = KeyType.Sr25519, Mnemonic.BIP39Wordlist bIP39Wordlist = Mnemonic.BIP39Wordlist.English, string walletName = DefaultWalletName)
+        public bool Create(string password, string mnemonic, KeyType keyType = KeyType.Sr25519, Mnemonic.BIP39Wordlist bIP39Wordlist = Mnemonic.BIP39Wordlist.English, string walletName = DefaultWalletName, bool useDerivation = true)
         {
             if (IsCreated)
             {
@@ -136,7 +137,7 @@ namespace Substrate.NET.Wallet
 
             Logger.Information("Creating new wallet from mnemonic.");
 
-            var seed = Mnemonic.GetSecretKeyFromMnemonic(mnemonic, password, bIP39Wordlist);
+            var seed = Mnemonic.GetSecretKeyFromMnemonic(mnemonic, useDerivation ? password : "", bIP39Wordlist);
             switch (keyType)
             {
                 case KeyType.Ed25519:
@@ -155,7 +156,7 @@ namespace Substrate.NET.Wallet
 
             var randomBytes = new byte[48];
 
-            _random.NextBytes(randomBytes);
+            _random.GetBytes(randomBytes);
 
             var memoryBytes = randomBytes.AsMemory();
 
@@ -201,7 +202,7 @@ namespace Substrate.NET.Wallet
 
             var randomBytes = new byte[48];
 
-            _random.NextBytes(randomBytes);
+            _random.GetBytes(randomBytes);
 
             var memoryBytes = randomBytes.AsMemory();
 
@@ -234,6 +235,65 @@ namespace Substrate.NET.Wallet
                     Utils.Bytes2HexString(seed, Utils.HexStringFormat.Pure), pswBytes, salt);
 
             _walletFile = new FileStore(keyType, Account.Bytes, encryptedSeed, salt);
+
+            Caching.Persist(AddWalletFileType(walletName), _walletFile);
+
+            return true;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="password"></param>
+        /// <param name="keyType"></param>
+        /// <param name="walletName"></param>
+        /// <returns></returns>
+        /// <exception cref="NotImplementedException"></exception>
+        public bool Create(Account account, string password, string walletName = DefaultWalletName)
+        {
+            if (IsCreated)
+            {
+                Logger.Warning("Wallet already created.");
+                return true;
+            }
+
+            if (!IsValidPassword(password))
+            {
+                Logger.Warning(
+                    "Password isn't is invalid, please provide a proper password. Minmimu eight size and must have upper, lower and digits.");
+                return false;
+            }
+
+            Logger.Information("Creating new wallet.");
+
+            if (account.PrivateKey == null)
+            {
+                Logger.Warning("Account doesn't have a private key.");
+                return false;
+            }
+
+            Account = account;
+
+            var randomBytes = new byte[48];
+
+            _random.GetBytes(randomBytes);
+
+            var memoryBytes = randomBytes.AsMemory();
+
+            var pswBytes = Encoding.UTF8.GetBytes(password);
+
+            var salt = memoryBytes.Slice(0, 16).ToArray();
+
+            var seed = memoryBytes.Slice(16, 32).ToArray();
+
+
+            pswBytes = SHA256.Create().ComputeHash(pswBytes);
+
+            var encryptedSeed =
+                ManagedAes.EncryptStringToBytes_Aes(
+                    Utils.Bytes2HexString(seed, Utils.HexStringFormat.Pure), pswBytes, salt);
+
+            _walletFile = new FileStore(Account.KeyType, Account.Bytes, encryptedSeed, salt);
 
             Caching.Persist(AddWalletFileType(walletName), _walletFile);
 
@@ -298,12 +358,24 @@ namespace Substrate.NET.Wallet
         /// <summary>
         /// Tries the sign message.
         /// </summary>
+        /// <param name="data"></param>
+        /// <param name="signature"></param>
+        /// <param name="wrap"></param>
+        /// <returns></returns>
+        public bool TrySignMessage(byte[] data, out byte[] signature, bool wrap = true)
+        {
+            return TrySignMessage(Account, data, out signature, wrap);
+        }
+
+        /// <summary>
+        /// Tries the sign message.
+        /// </summary>
         /// <param name="signer">The signer.</param>
         /// <param name="data">The data.</param>
         /// <param name="signature">The signature.</param>
         /// <returns></returns>
         /// <exception cref="NotImplementedException">KeyType {signer.KeyType} is currently not implemented for signing.</exception>
-        public bool TrySignMessage(Account signer, byte[] data, out byte[] signature)
+        public static bool TrySignMessage(Account signer, byte[] data, out byte[] signature, bool wrap = true)
         {
             signature = null;
 
@@ -311,6 +383,11 @@ namespace Substrate.NET.Wallet
             {
                 Logger.Warning("Account or private key doesn't exists.");
                 return false;
+            }
+
+            if (wrap && !WrapMessage.IsWrapped(data))
+            {
+                data = WrapMessage.Wrap(data);
             }
 
             switch (signer.KeyType)
@@ -334,13 +411,30 @@ namespace Substrate.NET.Wallet
         /// <summary>
         /// Verifies the signature.
         /// </summary>
+        /// <param name="data"></param>
+        /// <param name="signature"></param>
+        /// <param name="wrap"></param>
+        /// <returns></returns>
+        public bool VerifySignature(byte[] data, byte[] signature, bool wrap = true)
+        {
+              return VerifySignature(Account, data, signature, wrap);
+        }
+
+        /// <summary>
+        /// Verifies the signature.
+        /// </summary>
         /// <param name="signer">The signer.</param>
         /// <param name="data">The data.</param>
         /// <param name="signature">The signature.</param>
         /// <returns></returns>
         /// <exception cref="NotImplementedException">KeyType {signer.KeyType} is currently not implemented for verifying signatures.</exception>
-        public bool VerifySignature(Account signer, byte[] data, byte[] signature)
+        public static bool VerifySignature(Account signer, byte[] data, byte[] signature, bool wrap = true)
         {
+            if (wrap && !WrapMessage.IsWrapped(data))
+            {
+                data = WrapMessage.Wrap(data);
+            }
+
             switch (signer.KeyType)
             {
                 case KeyType.Ed25519:
