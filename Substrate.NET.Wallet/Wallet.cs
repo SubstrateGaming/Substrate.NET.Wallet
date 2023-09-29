@@ -29,6 +29,10 @@ namespace Substrate.NET.Wallet
 
         private FileStore _walletFile;
 
+        public Account Account { get; private set; }
+
+        public string FileName { get; private set; }
+
         /// <summary>
         /// Constructor
         /// </summary>
@@ -42,7 +46,7 @@ namespace Substrate.NET.Wallet
         /// <value>
         ///   <c>true</c> if this instance is unlocked; otherwise, <c>false</c>.
         /// </value>
-        public bool IsUnlocked => Account != null;
+        public bool IsUnlocked => Account != null && Account.PrivateKey != null;
 
         /// <summary>
         /// Gets a value indicating whether this instance is created.
@@ -51,8 +55,6 @@ namespace Substrate.NET.Wallet
         ///   <c>true</c> if this instance is created; otherwise, <c>false</c>.
         /// </value>
         public bool IsCreated => _walletFile != null;
-
-        public Account Account { get; private set; }
 
         /// <summary>
         /// Determines whether [is valid wallet name] [the specified wallet name].
@@ -110,6 +112,12 @@ namespace Substrate.NET.Wallet
                 return false;
             }
 
+            var newAccount = new Account();
+            newAccount.Create(_walletFile.KeyType, _walletFile.PublicKey);
+            
+            FileName = walletName;
+            Account = newAccount;
+
             return true;
         }
 
@@ -136,6 +144,8 @@ namespace Substrate.NET.Wallet
             }
 
             Logger.Information("Creating new wallet from mnemonic.");
+
+            FileName = walletName;
 
             var seed = Mnemonic.GetSecretKeyFromMnemonic(mnemonic, useDerivation ? password : "", bIP39Wordlist);
             switch (keyType)
@@ -212,6 +222,8 @@ namespace Substrate.NET.Wallet
 
             var seed = memoryBytes.Slice(16, 32).ToArray();
 
+            FileName = walletName;
+
             switch (keyType)
             {
                 case KeyType.Ed25519:
@@ -266,12 +278,13 @@ namespace Substrate.NET.Wallet
 
             Logger.Information("Creating new wallet.");
 
-            if (account.PrivateKey == null)
+            if (IsUnlocked)
             {
-                Logger.Warning("Account doesn't have a private key.");
+                Logger.Warning("Account is null or doesn't have a private key.");
                 return false;
             }
 
+            FileName = walletName;
             Account = account;
 
             var randomBytes = new byte[48];

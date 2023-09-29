@@ -6,6 +6,7 @@ using Substrate.NetApi;
 using Substrate.NetApi.Model.Types;
 using System;
 using System.IO;
+using System.Security.Cryptography;
 using System.Text;
 
 namespace SubstrateNetWalletTest
@@ -282,6 +283,25 @@ namespace SubstrateNetWalletTest
             Assert.True(Wallet.VerifySignature(accountEd, data, signatureEdNoWrap, false));
             Assert.True(Wallet.VerifySignature(accountEd, data, signatureEdWrap, true));
 
+        }
+
+
+        [Test]
+        public void FullCreationTest()
+        {
+            RandomNumberGenerator random = RandomNumberGenerator.Create();
+            var randomBytes = new byte[16];
+            random.GetBytes(randomBytes);
+            var mnemonic = string.Join(" ", Mnemonic.MnemonicFromEntropy(randomBytes, Mnemonic.BIP39Wordlist.English));
+            var tempAccount = Mnemonic.GetAccountFromMnemonic(mnemonic, "", KeyType.Sr25519);
+            var tempName = "HANS_IS";
+            var tempPassword = "aA1234dd";
+
+            var wallet = new Wallet();
+            wallet.Create(tempAccount, tempPassword, tempName);
+
+            Assert.True(wallet.IsCreated);
+            Assert.True(wallet.IsUnlocked);
         }
     }
 }
