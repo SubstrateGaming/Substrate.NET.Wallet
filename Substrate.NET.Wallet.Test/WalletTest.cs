@@ -44,101 +44,56 @@ namespace SubstrateNetWalletTest
         }
 
         [Test]
+        public void LoadWalletFromFileTest()
+        {
+            var walletName = "dev_wallet";
+
+            Wallet.Load(walletName, out Wallet wallet1);
+            Assert.True(wallet1.IsStored);
+            Assert.False(wallet1.IsUnlocked);
+        }
+
+        [Test]
         public void CreateWalletEd25519Test()
         {
-            // create new wallet with password and persist
-            var wallet1 = new Wallet();
+            var walletName = "wallet1";
 
-            wallet1.Create("aA1234dd", KeyType.Ed25519);
-
-            Assert.True(wallet1.IsCreated);
-
+            Wallet.CreateFromRandom("aA1234dd", KeyType.Ed25519, walletName, out Wallet wallet1);
+            Assert.True(wallet1.IsStored);
             Assert.True(wallet1.IsUnlocked);
 
-            // read wallet
-            var wallet2 = new Wallet();
-
-            wallet2.Load();
-
-            Assert.True(wallet2.IsCreated);
-
+            // load wallet wallet
+            Wallet.Load(walletName, out Wallet wallet2);
+            Assert.True(wallet2.IsStored);
             Assert.False(wallet2.IsUnlocked);
 
             // unlock wallet with password
+            Assert.False(wallet2.IsUnlocked);
             wallet2.Unlock("aA1234dd");
-
             Assert.True(wallet2.IsUnlocked);
-
             Assert.AreEqual(wallet1.Account.Value, wallet2.Account.Value);
-
-            var wallet3 = new Wallet();
-
-            Assert.False(wallet3.IsCreated);
-
-            wallet3.Load();
-
-            Assert.True(wallet3.IsCreated);
-
-            Assert.False(wallet3.IsUnlocked);
-
-            // unlock wallet with password
-            wallet3.Unlock("aA4321dd");
-
-            Assert.False(wallet3.IsUnlocked);
-
-            var wallet4 = new Wallet();
-            wallet4.Load("dev_wallet");
-
-            Assert.True(wallet4.IsCreated);
         }
 
         [Test]
         public void CreateWalletSr25519Test()
         {
+            var walletName = "wallet2";
+
             // create new wallet with password and persist
-            var wallet1 = new Wallet();
-
-            wallet1.Create("aA1234dd", KeyType.Sr25519);
-
-            Assert.True(wallet1.IsCreated);
-
+            Wallet.CreateFromRandom("aA1234dd", KeyType.Sr25519, walletName, out Wallet wallet1);
+            Assert.True(wallet1.IsStored);
             Assert.True(wallet1.IsUnlocked);
 
             // read wallet
-            var wallet2 = new Wallet();
-
-            wallet2.Load();
-
-            Assert.True(wallet2.IsCreated);
-
+            Wallet.Load(walletName, out Wallet wallet2);
+            Assert.True(wallet2.IsStored);
             Assert.False(wallet2.IsUnlocked);
 
             // unlock wallet with password
+            Assert.False(wallet2.IsUnlocked);
             wallet2.Unlock("aA1234dd");
-
             Assert.True(wallet2.IsUnlocked);
-
             Assert.AreEqual(wallet1.Account.Value, wallet2.Account.Value);
-
-            var wallet3 = new Wallet();
-
-            Assert.False(wallet3.IsCreated);
-
-            wallet3.Load();
-
-            Assert.True(wallet3.IsCreated);
-
-            Assert.False(wallet3.IsUnlocked);
-
-            // unlock wallet with password
-            wallet3.Unlock("aA4321dd");
-
-            Assert.False(wallet3.IsUnlocked);
-
-            var wallet4 = new Wallet();
-            wallet4.Load("dev_wallet");
-
-            Assert.True(wallet4.IsCreated);
         }
 
         [Test]
@@ -146,32 +101,22 @@ namespace SubstrateNetWalletTest
         {
             //var mnemonic = "donor rocket find fan language damp yellow crouch attend meat hybrid pulse";
             var mnemonic = "tornado glad segment lift squirrel top ball soldier joy sudden edit advice";
+            var walletName = "mnem_wallet1";
 
             // create new wallet with password and persist
-            var wallet1 = new Wallet();
-
-            wallet1.Create("aA1234dd", mnemonic, KeyType.Sr25519, Mnemonic.BIP39Wordlist.English, "mnemonic_wallet");
-
-            Assert.True(wallet1.IsCreated);
-
+            Wallet.CreateFromMnemonic("aA1234dd", mnemonic, KeyType.Sr25519, Mnemonic.BIP39Wordlist.English, walletName, out Wallet wallet1);
+            Assert.True(wallet1.IsStored);
             Assert.True(wallet1.IsUnlocked);
-
-            Assert.AreEqual("5DUUUnqM2wtsr7Acc4T5usvN3pmkdX5shkKkPEFtH7mEdk1g", wallet1.Account.Value);
+            Assert.AreEqual("5Fe24e21Ff5vRtuWa4ZNPv1EGQz1zBq1VtT8ojqfmzo9k11P", wallet1.Account.Value);
 
             // read wallet
-            var wallet2 = new Wallet();
-
-            wallet2.Load("mnemonic_wallet");
-
-            Assert.True(wallet2.IsCreated);
-
+            Wallet.Load(walletName, out Wallet wallet2);
+            Assert.True(wallet2.IsStored);
             Assert.False(wallet2.IsUnlocked);
 
             // unlock wallet with password
             wallet2.Unlock("aA1234dd");
-
             Assert.True(wallet2.IsUnlocked);
-
             Assert.AreEqual(wallet1.Account.Value, wallet2.Account.Value);
         }
 
@@ -179,32 +124,22 @@ namespace SubstrateNetWalletTest
         public void CreateMnemonicEd25519Test()
         {
             var mnemonic = "tornado glad segment lift squirrel top ball soldier joy sudden edit advice";
+            var walletName = "mnem_wallet2";
 
             // create new wallet with password and persist
-            var wallet1 = new Wallet();
-
-            wallet1.Create("aA1234dd", mnemonic, KeyType.Ed25519, Mnemonic.BIP39Wordlist.English, "mnemonic_wallet");
-
-            Assert.True(wallet1.IsCreated);
-
+            Wallet.CreateFromMnemonic("aA1234dd", mnemonic, KeyType.Ed25519, Mnemonic.BIP39Wordlist.English, walletName, out Wallet wallet1);
+            Assert.True(wallet1.IsStored);
             Assert.True(wallet1.IsUnlocked);
-
-            Assert.AreEqual("5HDyAVCfErKADLgtdhGKPiDbFStPP2cXAzNnJh4qbFaECkWY", wallet1.Account.Value);
+            Assert.AreEqual("5CcaF7yE6YU67TyPHjSwd9DKiVBTAS2AktdxNG3DeLYs63gF", wallet1.Account.Value);
 
             // read wallet
-            var wallet2 = new Wallet();
-
-            wallet2.Load("mnemonic_wallet");
-
-            Assert.True(wallet2.IsCreated);
-
+            Wallet.Load(walletName, out Wallet wallet2);
+            Assert.True(wallet2.IsStored);
             Assert.False(wallet2.IsUnlocked);
 
             // unlock wallet with password
             wallet2.Unlock("aA1234dd");
-
             Assert.True(wallet2.IsUnlocked);
-
             Assert.AreEqual(wallet1.Account.Value, wallet2.Account.Value);
         }
 
@@ -212,43 +147,28 @@ namespace SubstrateNetWalletTest
         public void CreateAccountTest()
         {
             var mnemonic = "tornado glad segment lift squirrel top ball soldier joy sudden edit advice";
+            var address = "5CcaF7yE6YU67TyPHjSwd9DKiVBTAS2AktdxNG3DeLYs63gF";
+            var walletName = "acc_wallet";
 
             // create new wallet with password and persist
-            var wallet1 = new Wallet();
-
-            wallet1.Create("aA1234dd", mnemonic, KeyType.Ed25519, Mnemonic.BIP39Wordlist.English, "mnemonic_wallet");
-
-            Assert.True(wallet1.IsCreated);
-
+            Wallet.CreateFromMnemonic("aA1234dd", mnemonic, KeyType.Ed25519, Mnemonic.BIP39Wordlist.English, walletName, out Wallet wallet1);
+            Assert.True(wallet1.IsStored);
             Assert.True(wallet1.IsUnlocked);
+            Assert.AreEqual(address, wallet1.Account.Value);
 
-            Assert.AreEqual("5HDyAVCfErKADLgtdhGKPiDbFStPP2cXAzNnJh4qbFaECkWY", wallet1.Account.Value);
+            // recreate wallet
+            Wallet.CreateFromAccount(wallet1.Account, "aA1234dd", walletName + "_cp", out Wallet wallet2);
+            Assert.True(wallet2.IsStored);
+            Assert.True(wallet2.IsUnlocked);
+            Assert.AreEqual(address, wallet2.Account.Value);
 
             // read wallet
-            var wallet2 = new Wallet();
-
-            wallet2.Create(wallet1.Account, "aA1234dd", "account_wallet");
-
-            Assert.True(wallet2.IsCreated);
-
-            Assert.True(wallet2.IsUnlocked);
-
-            Assert.AreEqual("5HDyAVCfErKADLgtdhGKPiDbFStPP2cXAzNnJh4qbFaECkWY", wallet2.Account.Value);
-        }
-
-        [Test]
-        public void CheckAccount()
-        {
-            var wallet = new Wallet();
-            wallet.Load("dev_wallet");
-
-            Assert.True(wallet.IsCreated);
-
-            wallet.Unlock("aA1234dd");
-
-            Assert.True(wallet.IsUnlocked);
-
-            Assert.AreEqual("5FfzQe73TTQhmSQCgvYocrr6vh1jJXEKB8xUB6tExfpKVCEZ", wallet.Account.Value);
+            Wallet.Load(walletName, out Wallet wallet3);
+            Assert.True(wallet3.IsStored);
+            Assert.False(wallet3.IsUnlocked);
+            Assert.AreEqual(address, wallet3.Account.Value);
+            wallet3.Unlock("aA1234dd");
+            Assert.True(wallet3.IsUnlocked);
         }
 
         [Test]
@@ -289,11 +209,9 @@ namespace SubstrateNetWalletTest
             var tempName = "HANS_IS";
             var tempPassword = "aA1234dd";
 
-            var wallet = new Wallet();
-            wallet.Create(tempAccount, tempPassword, tempName);
-
-            Assert.True(wallet.IsCreated);
-            Assert.True(wallet.IsUnlocked);
+            Wallet.CreateFromAccount(tempAccount, tempPassword, tempName, out Wallet wallet1);
+            Assert.True(wallet1.IsStored);
+            Assert.True(wallet1.IsUnlocked);
         }
     }
 }
