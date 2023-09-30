@@ -87,7 +87,7 @@ namespace Substrate.NET.Wallet
         /// </summary>
         /// <param name="walletName">Name of the wallet.</param>
         /// <returns></returns>
-        public static string ConcatWalletFileType(string walletName) 
+        public static string ConcatWalletFileType(string walletName)
             => $"{walletName}.{FileType}";
 
         /// <summary>
@@ -112,7 +112,7 @@ namespace Substrate.NET.Wallet
 
             var newAccount = new Account();
             newAccount.Create(_walletFile.KeyType, _walletFile.PublicKey);
-            
+
             FileName = walletName;
             Account = newAccount;
 
@@ -252,7 +252,7 @@ namespace Substrate.NET.Wallet
         }
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         /// <param name="password"></param>
         /// <param name="keyType"></param>
@@ -296,7 +296,6 @@ namespace Substrate.NET.Wallet
             var salt = memoryBytes.Slice(0, 16).ToArray();
 
             var seed = memoryBytes.Slice(16, 32).ToArray();
-
 
             pswBytes = SHA256.Create().ComputeHash(pswBytes);
 
@@ -428,7 +427,7 @@ namespace Substrate.NET.Wallet
         /// <returns></returns>
         public bool VerifySignature(byte[] data, byte[] signature, bool wrap = true)
         {
-              return VerifySignature(Account, data, signature, wrap);
+            return VerifySignature(Account, data, signature, wrap);
         }
 
         /// <summary>

@@ -1,6 +1,4 @@
 using NUnit.Framework;
-using Schnorrkel.Signed;
-using Serilog;
 using Substrate.NET.Wallet;
 using Substrate.NetApi;
 using Substrate.NetApi.Model.Types;
@@ -258,7 +256,7 @@ namespace SubstrateNetWalletTest
         {
             var data = Encoding.UTF8.GetBytes("Let's sign this message, now!");
 
-            Random random = new Random(); 
+            Random random = new Random();
             var randomBytes = new byte[16];
             random.NextBytes(randomBytes);
 
@@ -278,9 +276,7 @@ namespace SubstrateNetWalletTest
 
             Assert.True(Wallet.VerifySignature(accountEd, data, signatureEdNoWrap, false));
             Assert.True(Wallet.VerifySignature(accountEd, data, signatureEdWrap, true));
-
         }
-
 
         [Test]
         public void FullCreationTest()
