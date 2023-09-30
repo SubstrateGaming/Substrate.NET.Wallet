@@ -26,27 +26,23 @@ namespace SubstrateNetWalletTest
         [Test]
         public void IsValidPasswordTest()
         {
-            var wallet = new Wallet();
+            Assert.False(Wallet.IsValidPassword("12345678"));
+            Assert.False(Wallet.IsValidPassword("ABCDEFGH"));
+            Assert.False(Wallet.IsValidPassword("abcdefgh"));
+            Assert.False(Wallet.IsValidPassword("ABCDefgh"));
+            Assert.False(Wallet.IsValidPassword("1BCDefg"));
 
-            Assert.False(wallet.IsValidPassword("12345678"));
-            Assert.False(wallet.IsValidPassword("ABCDEFGH"));
-            Assert.False(wallet.IsValidPassword("abcdefgh"));
-            Assert.False(wallet.IsValidPassword("ABCDefgh"));
-            Assert.False(wallet.IsValidPassword("1BCDefg"));
-
-            Assert.True(wallet.IsValidPassword("ABCDefg1"));
+            Assert.True(Wallet.IsValidPassword("ABCDefg1"));
         }
 
         [Test]
         public void IsValidWalletNameTest()
         {
-            var wallet = new Wallet();
+            Assert.False(Wallet.IsValidWalletName("1234"));
+            Assert.False(Wallet.IsValidWalletName("ABC_/"));
 
-            Assert.False(wallet.IsValidWalletName("1234"));
-            Assert.False(wallet.IsValidWalletName("ABC_/"));
-
-            Assert.True(wallet.IsValidWalletName("wal_let"));
-            Assert.True(wallet.IsValidWalletName("1111111"));
+            Assert.True(Wallet.IsValidWalletName("wal_let"));
+            Assert.True(Wallet.IsValidWalletName("1111111"));
         }
 
         [Test]

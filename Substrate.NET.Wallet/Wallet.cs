@@ -21,7 +21,7 @@ namespace Substrate.NET.Wallet
         /// <summary> The logger. </summary>
         private static readonly ILogger Logger = new LoggerConfiguration().CreateLogger();
 
-        private const string FileType = "dat";
+        private const string FileType = "json";
 
         private const string DefaultWalletName = "wallet";
 
@@ -63,7 +63,7 @@ namespace Substrate.NET.Wallet
         /// <returns>
         ///   <c>true</c> if [is valid wallet name] [the specified wallet name]; otherwise, <c>false</c>.
         /// </returns>
-        public bool IsValidWalletName(string walletName)
+        public static bool IsValidWalletName(string walletName)
         {
             return walletName.Length > 4 && walletName.Length < 21 &&
                    walletName.All(c => char.IsLetterOrDigit(c) || c.Equals('_'));
@@ -76,7 +76,7 @@ namespace Substrate.NET.Wallet
         /// <returns>
         ///   <c>true</c> if [is valid password] [the specified password]; otherwise, <c>false</c>.
         /// </returns>
-        public bool IsValidPassword(string password)
+        public static bool IsValidPassword(string password)
         {
             return password.Length > 7 && password.Length < 21 && password.Any(char.IsUpper) &&
                    password.Any(char.IsLower) && password.Any(char.IsDigit);
@@ -87,10 +87,8 @@ namespace Substrate.NET.Wallet
         /// </summary>
         /// <param name="walletName">Name of the wallet.</param>
         /// <returns></returns>
-        public string AddWalletFileType(string walletName)
-        {
-            return $"{walletName}.{FileType}";
-        }
+        public static string ConcatWalletFileType(string walletName) 
+            => $"{walletName}.{FileType}";
 
         /// <summary>
         /// Load an existing wallet
@@ -105,7 +103,7 @@ namespace Substrate.NET.Wallet
                 return false;
             }
 
-            var walletFileName = AddWalletFileType(walletName);
+            var walletFileName = ConcatWalletFileType(walletName);
             if (!Caching.TryReadFile(walletFileName, out _walletFile))
             {
                 Logger.Warning("Failed to load wallet file '{walletFileName}'!", walletFileName);
@@ -182,7 +180,7 @@ namespace Substrate.NET.Wallet
 
             _walletFile = new FileStore(keyType, Account.Bytes, encryptedSeed, salt);
 
-            Caching.Persist(AddWalletFileType(walletName), _walletFile);
+            Caching.Persist(Wallet.ConcatWalletFileType(walletName), _walletFile);
 
             return true;
         }
@@ -248,7 +246,7 @@ namespace Substrate.NET.Wallet
 
             _walletFile = new FileStore(keyType, Account.Bytes, encryptedSeed, salt);
 
-            Caching.Persist(AddWalletFileType(walletName), _walletFile);
+            Caching.Persist(Wallet.ConcatWalletFileType(walletName), _walletFile);
 
             return true;
         }
@@ -308,7 +306,7 @@ namespace Substrate.NET.Wallet
 
             _walletFile = new FileStore(Account.KeyType, Account.Bytes, encryptedSeed, salt);
 
-            Caching.Persist(AddWalletFileType(walletName), _walletFile);
+            Caching.Persist(Wallet.ConcatWalletFileType(walletName), _walletFile);
 
             return true;
         }
