@@ -4,7 +4,7 @@ using System;
 
 namespace Substrate.NET.Wallet
 {
-    public class Caching
+    public static class Caching
     {
         /// <summary> The logger. </summary>
         private static readonly ILogger Logger = new LoggerConfiguration().CreateLogger();

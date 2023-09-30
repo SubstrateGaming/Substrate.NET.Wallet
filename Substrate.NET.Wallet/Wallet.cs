@@ -23,21 +23,25 @@ namespace Substrate.NET.Wallet
 
         private const string FileType = "json";
 
-        private const string DefaultWalletName = "wallet";
-
-        private readonly RandomNumberGenerator _random = RandomNumberGenerator.Create();
-
-        private FileStore _walletFile;
+        private static readonly RandomNumberGenerator _random = RandomNumberGenerator.Create();
 
         public Account Account { get; private set; }
 
         public string FileName { get; private set; }
 
+        public FileStore FileStore { get; private set; }
+
         /// <summary>
-        /// Constructor
+        ///
         /// </summary>
-        public Wallet()
+        /// <param name="account"></param>
+        /// <param name="walletName"></param>
+        /// <param name="fileStore"></param>
+        private Wallet(Account account, string walletName, FileStore fileStore)
         {
+            Account = account;
+            FileName = walletName;
+            FileStore = fileStore;
         }
 
         /// <summary>
@@ -54,261 +58,7 @@ namespace Substrate.NET.Wallet
         /// <value>
         ///   <c>true</c> if this instance is created; otherwise, <c>false</c>.
         /// </value>
-        public bool IsCreated => _walletFile != null;
-
-        /// <summary>
-        /// Determines whether [is valid wallet name] [the specified wallet name].
-        /// </summary>
-        /// <param name="walletName">Name of the wallet.</param>
-        /// <returns>
-        ///   <c>true</c> if [is valid wallet name] [the specified wallet name]; otherwise, <c>false</c>.
-        /// </returns>
-        public static bool IsValidWalletName(string walletName)
-        {
-            return walletName.Length > 4 && walletName.Length < 21 &&
-                   walletName.All(c => char.IsLetterOrDigit(c) || c.Equals('_'));
-        }
-
-        /// <summary>
-        /// Determines whether [is valid password] [the specified password].
-        /// </summary>
-        /// <param name="password">The password.</param>
-        /// <returns>
-        ///   <c>true</c> if [is valid password] [the specified password]; otherwise, <c>false</c>.
-        /// </returns>
-        public static bool IsValidPassword(string password)
-        {
-            return password.Length > 7 && password.Length < 21 && password.Any(char.IsUpper) &&
-                   password.Any(char.IsLower) && password.Any(char.IsDigit);
-        }
-
-        /// <summary>
-        /// Adds the type of the wallet file.
-        /// </summary>
-        /// <param name="walletName">Name of the wallet.</param>
-        /// <returns></returns>
-        public static string ConcatWalletFileType(string walletName)
-            => $"{walletName}.{FileType}";
-
-        /// <summary>
-        /// Load an existing wallet
-        /// </summary>
-        /// <param name="walletName"></param>
-        /// <returns></returns>
-        public bool Load(string walletName = DefaultWalletName)
-        {
-            if (!IsValidWalletName(walletName))
-            {
-                Logger.Warning("Wallet name is invalid, please provide a proper wallet name. [A-Za-Z_]{20}.");
-                return false;
-            }
-
-            var walletFileName = ConcatWalletFileType(walletName);
-            if (!Caching.TryReadFile(walletFileName, out _walletFile))
-            {
-                Logger.Warning("Failed to load wallet file '{walletFileName}'!", walletFileName);
-                return false;
-            }
-
-            var newAccount = new Account();
-            newAccount.Create(_walletFile.KeyType, _walletFile.PublicKey);
-
-            FileName = walletName;
-            Account = newAccount;
-
-            return true;
-        }
-
-        /// <summary>
-        /// Creates the asynchronous.
-        /// </summary>
-        /// <param name="password">The password.</param>
-        /// <param name="mnemonic">The mnemonic.</param>
-        /// <param name="walletName">Name of the wallet.</param>
-        /// <returns></returns>
-        public bool Create(string password, string mnemonic, KeyType keyType = KeyType.Sr25519, Mnemonic.BIP39Wordlist bIP39Wordlist = Mnemonic.BIP39Wordlist.English, string walletName = DefaultWalletName, bool useDerivation = true)
-        {
-            if (IsCreated)
-            {
-                Logger.Warning("Wallet already created.");
-                return true;
-            }
-
-            if (!IsValidPassword(password))
-            {
-                Logger.Warning(
-                    "Password isn't is invalid, please provide a proper password. Minmimu eight size and must have upper, lower and digits.");
-                return false;
-            }
-
-            Logger.Information("Creating new wallet from mnemonic.");
-
-            FileName = walletName;
-
-            var seed = Mnemonic.GetSecretKeyFromMnemonic(mnemonic, useDerivation ? password : "", bIP39Wordlist);
-            switch (keyType)
-            {
-                case KeyType.Ed25519:
-                    Ed25519.KeyPairFromSeed(out byte[] pubKey, out byte[] priKey, seed);
-                    Account = Account.Build(KeyType.Ed25519, priKey, pubKey);
-                    break;
-
-                case KeyType.Sr25519:
-                    var miniSecret = new MiniSecret(seed, ExpandMode.Ed25519);
-                    Account = Account.Build(KeyType.Sr25519, miniSecret.ExpandToSecret().ToBytes(), miniSecret.GetPair().Public.Key);
-                    break;
-
-                default:
-                    throw new NotImplementedException($"KeyType {keyType} isn't implemented!");
-            }
-
-            var randomBytes = new byte[48];
-
-            _random.GetBytes(randomBytes);
-
-            var memoryBytes = randomBytes.AsMemory();
-
-            var pswBytes = Encoding.UTF8.GetBytes(password);
-
-            var salt = memoryBytes.Slice(0, 16).ToArray();
-
-            pswBytes = SHA256.Create().ComputeHash(pswBytes);
-
-            var encryptedSeed =
-                ManagedAes.EncryptStringToBytes_Aes(
-                    Utils.Bytes2HexString(seed, Utils.HexStringFormat.Pure), pswBytes, salt);
-
-            _walletFile = new FileStore(keyType, Account.Bytes, encryptedSeed, salt);
-
-            Caching.Persist(Wallet.ConcatWalletFileType(walletName), _walletFile);
-
-            return true;
-        }
-
-        /// <summary>
-        /// Creates the asynchronous.
-        /// </summary>
-        /// <param name="password">The password.</param>
-        /// <param name="walletName">Name of the wallet.</param>
-        /// <returns></returns>
-        public bool Create(string password, KeyType keyType = KeyType.Sr25519, string walletName = DefaultWalletName)
-        {
-            if (IsCreated)
-            {
-                Logger.Warning("Wallet already created.");
-                return true;
-            }
-
-            if (!IsValidPassword(password))
-            {
-                Logger.Warning(
-                    "Password isn't is invalid, please provide a proper password. Minmimu eight size and must have upper, lower and digits.");
-                return false;
-            }
-
-            Logger.Information("Creating new wallet.");
-
-            var randomBytes = new byte[48];
-
-            _random.GetBytes(randomBytes);
-
-            var memoryBytes = randomBytes.AsMemory();
-
-            var pswBytes = Encoding.UTF8.GetBytes(password);
-
-            var salt = memoryBytes.Slice(0, 16).ToArray();
-
-            var seed = memoryBytes.Slice(16, 32).ToArray();
-
-            FileName = walletName;
-
-            switch (keyType)
-            {
-                case KeyType.Ed25519:
-                    Ed25519.KeyPairFromSeed(out byte[] pubKey, out byte[] priKey, seed);
-                    Account = Account.Build(KeyType.Ed25519, priKey, pubKey);
-                    break;
-
-                case KeyType.Sr25519:
-                    var miniSecret = new MiniSecret(seed, ExpandMode.Ed25519);
-                    Account = Account.Build(KeyType.Sr25519, miniSecret.ExpandToSecret().ToBytes(), miniSecret.GetPair().Public.Key);
-                    break;
-
-                default:
-                    throw new NotImplementedException($"KeyType {keyType} isn't implemented!");
-            }
-
-            pswBytes = SHA256.Create().ComputeHash(pswBytes);
-
-            var encryptedSeed =
-                ManagedAes.EncryptStringToBytes_Aes(
-                    Utils.Bytes2HexString(seed, Utils.HexStringFormat.Pure), pswBytes, salt);
-
-            _walletFile = new FileStore(keyType, Account.Bytes, encryptedSeed, salt);
-
-            Caching.Persist(Wallet.ConcatWalletFileType(walletName), _walletFile);
-
-            return true;
-        }
-
-        /// <summary>
-        ///
-        /// </summary>
-        /// <param name="password"></param>
-        /// <param name="keyType"></param>
-        /// <param name="walletName"></param>
-        /// <returns></returns>
-        /// <exception cref="NotImplementedException"></exception>
-        public bool Create(Account account, string password, string walletName = DefaultWalletName)
-        {
-            if (IsCreated)
-            {
-                Logger.Warning("Wallet already created.");
-                return true;
-            }
-
-            if (!IsValidPassword(password))
-            {
-                Logger.Warning(
-                    "Password isn't is invalid, please provide a proper password. Minmimu eight size and must have upper, lower and digits.");
-                return false;
-            }
-
-            Logger.Information("Creating new wallet.");
-
-            if (IsUnlocked)
-            {
-                Logger.Warning("Account is null or doesn't have a private key.");
-                return false;
-            }
-
-            FileName = walletName;
-            Account = account;
-
-            var randomBytes = new byte[48];
-
-            _random.GetBytes(randomBytes);
-
-            var memoryBytes = randomBytes.AsMemory();
-
-            var pswBytes = Encoding.UTF8.GetBytes(password);
-
-            var salt = memoryBytes.Slice(0, 16).ToArray();
-
-            var seed = memoryBytes.Slice(16, 32).ToArray();
-
-            pswBytes = SHA256.Create().ComputeHash(pswBytes);
-
-            var encryptedSeed =
-                ManagedAes.EncryptStringToBytes_Aes(
-                    Utils.Bytes2HexString(seed, Utils.HexStringFormat.Pure), pswBytes, salt);
-
-            _walletFile = new FileStore(Account.KeyType, Account.Bytes, encryptedSeed, salt);
-
-            Caching.Persist(Wallet.ConcatWalletFileType(walletName), _walletFile);
-
-            return true;
-        }
+        public bool IsStored => FileStore != null;
 
         /// <summary>
         /// Unlocks the asynchronous.
@@ -319,13 +69,13 @@ namespace Substrate.NET.Wallet
         /// <exception cref="Exception">Public key check failed!</exception>
         public bool Unlock(string password, bool noCheck = false)
         {
-            if (IsUnlocked || !IsCreated)
+            if (IsUnlocked || !IsStored)
             {
                 Logger.Warning("Wallet is already unlocked or doesn't exist.");
-                return IsUnlocked && IsCreated;
+                return IsUnlocked && IsStored;
             }
 
-            Logger.Information("Unlock new wallet.");
+            Logger.Information("Unlock wallet.");
 
             try
             {
@@ -333,11 +83,11 @@ namespace Substrate.NET.Wallet
 
                 pswBytes = SHA256.Create().ComputeHash(pswBytes);
 
-                var seed = ManagedAes.DecryptStringFromBytes_Aes(_walletFile.EncryptedSeed, pswBytes, _walletFile.Salt);
+                var seed = ManagedAes.DecryptStringFromBytes_Aes(FileStore.EncryptedSeed, pswBytes, FileStore.Salt);
 
                 byte[] publicKey = null;
                 byte[] privateKey = null;
-                switch (_walletFile.KeyType)
+                switch (FileStore.KeyType)
                 {
                     case KeyType.Ed25519:
                         Ed25519.KeyPairFromSeed(out publicKey, out privateKey, Utils.HexToByteArray(seed));
@@ -351,14 +101,45 @@ namespace Substrate.NET.Wallet
                         break;
                 }
 
-                if (noCheck || !publicKey.SequenceEqual(_walletFile.PublicKey))
-                    throw new Exception("Public key check failed!");
+                if (!noCheck && !publicKey.SequenceEqual(FileStore.PublicKey))
+                {
+                    throw new NotSupportedException("Public key check failed!");
+                }
 
-                Account = Account.Build(_walletFile.KeyType, privateKey, publicKey);
+                Account = Account.Build(FileStore.KeyType, privateKey, publicKey);
             }
             catch (Exception e)
             {
                 Logger.Warning("Couldn't unlock the wallet with this password. {error}", e);
+                return false;
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        ///
+        /// </summary>
+        /// <param name="password"></param>
+        /// <param name="noCheck"></param>
+        /// <returns></returns>
+        public bool Lock(string password, bool noCheck = false)
+        {
+            if (!IsUnlocked || !IsStored)
+            {
+                Logger.Warning("Wallet is already unlocked or doesn't exist.");
+                return IsUnlocked && IsStored;
+            }
+
+            Logger.Information("Lock wallet.");
+
+            try
+            {
+                Account = Account.Build(FileStore.KeyType, null, Account.Bytes);
+            }
+            catch (Exception e)
+            {
+                Logger.Warning("Couldn't lock the wallet. {error}", e);
                 return false;
             }
 
@@ -373,8 +154,184 @@ namespace Substrate.NET.Wallet
         /// <param name="wrap"></param>
         /// <returns></returns>
         public bool TrySignMessage(byte[] data, out byte[] signature, bool wrap = true)
+            => TrySignMessage(Account, data, out signature, wrap);
+
+        /// <summary>
+        /// Verifies the signature.
+        /// </summary>
+        /// <param name="data"></param>
+        /// <param name="signature"></param>
+        /// <param name="wrap"></param>
+        /// <returns></returns>
+        public bool VerifySignature(byte[] data, byte[] signature, bool wrap = true)
+            => VerifySignature(Account, data, signature, wrap);
+
+        /// <summary>
+        /// Load the wallet from the file system.
+        /// </summary>
+        /// <param name="walletName"></param>
+        /// <param name="wallet"></param>
+        /// <returns></returns>
+        public static bool Load(string walletName, out Wallet wallet)
         {
-            return TrySignMessage(Account, data, out signature, wrap);
+            wallet = null;
+
+            if (!IsValidWalletName(walletName))
+            {
+                Logger.Warning("Wallet name is invalid, please provide a proper wallet name. [A-Za-Z_]{20}.");
+                return false;
+            }
+
+            var walletFileName = ConcatWalletFileType(walletName);
+            if (!Caching.TryReadFile(walletFileName, out FileStore fileStore))
+            {
+                Logger.Warning("Failed to load wallet file '{walletFileName}'!", walletFileName);
+                return false;
+            }
+
+            var newAccount = new Account();
+            newAccount.Create(fileStore.KeyType, fileStore.PublicKey);
+
+            wallet = new Wallet(newAccount, walletName, fileStore);
+
+            return true;
+        }
+
+        /// <summary>
+        /// Creates the asynchronous.
+        /// </summary>
+        /// <param name="password">The password.</param>
+        /// <param name="walletName">Name of the wallet.</param>
+        /// <returns></returns>
+        public static bool CreateFromRandom(string password, KeyType keyType, string walletName, out Wallet wallet)
+        {
+            wallet = null;
+
+            if (!IsValidWalletName(walletName))
+            {
+                Logger.Warning("Wallet name is invalid, please provide a proper wallet name. [A-Za-Z_]{20}.");
+                return false;
+            }
+
+            if (!IsValidPassword(password))
+            {
+                Logger.Warning(
+                    "Password isn't is invalid, please provide a proper password. Minmimu eight size and must have upper, lower and digits.");
+                return false;
+            }
+
+            Logger.Information("Creating new wallet.");
+
+            var randomBytes = new byte[48];
+
+            _random.GetBytes(randomBytes);
+
+            var memoryBytes = randomBytes.AsMemory();
+
+            var pswBytes = Encoding.UTF8.GetBytes(password);
+
+            var salt = memoryBytes.Slice(0, 16).ToArray();
+
+            var seed = memoryBytes.Slice(16, 32).ToArray();
+
+            Account account;
+            switch (keyType)
+            {
+                case KeyType.Ed25519:
+                    Ed25519.KeyPairFromSeed(out byte[] pubKey, out byte[] priKey, seed);
+                    account = Account.Build(KeyType.Ed25519, priKey, pubKey);
+                    break;
+
+                case KeyType.Sr25519:
+                    var miniSecret = new MiniSecret(seed, ExpandMode.Ed25519);
+                    account = Account.Build(KeyType.Sr25519, miniSecret.ExpandToSecret().ToBytes(), miniSecret.GetPair().Public.Key);
+                    break;
+
+                default:
+                    throw new NotImplementedException($"KeyType {keyType} isn't implemented!");
+            }
+
+            pswBytes = SHA256.Create().ComputeHash(pswBytes);
+
+            var encryptedSeed =
+                ManagedAes.EncryptStringToBytes_Aes(
+                    Utils.Bytes2HexString(seed, Utils.HexStringFormat.Pure), pswBytes, salt);
+
+            var fileStore = new FileStore(keyType, account.Bytes, encryptedSeed, salt);
+            Caching.Persist(Wallet.ConcatWalletFileType(walletName), fileStore);
+
+            wallet = new Wallet(account, walletName, fileStore);
+
+            return true;
+        }
+
+        /// <summary>
+        /// Creates the asynchronous.
+        /// </summary>
+        /// <param name="password">The password.</param>
+        /// <param name="mnemonic">The mnemonic.</param>
+        /// <param name="walletName">Name of the wallet.</param>
+        /// <returns></returns>
+        public static bool CreateFromMnemonic(string password, string mnemonic, KeyType keyType, Mnemonic.BIP39Wordlist bIP39Wordlist, string walletName, out Wallet wallet)
+        {
+            wallet = null;
+
+            if (!IsValidWalletName(walletName))
+            {
+                Logger.Warning("Wallet name is invalid, please provide a proper wallet name. [A-Za-Z_]{20}.");
+                return false;
+            }
+
+            if (!IsValidPassword(password))
+            {
+                Logger.Warning(
+                    "Password isn't is invalid, please provide a proper password. Minmimu eight size and must have upper, lower and digits.");
+                return false;
+            }
+
+            Logger.Information("Creating new wallet from mnemonic.");
+
+            var seed = Mnemonic.GetSecretKeyFromMnemonic(mnemonic, "", bIP39Wordlist);
+
+            Account account;
+            switch (keyType)
+            {
+                case KeyType.Ed25519:
+                    Ed25519.KeyPairFromSeed(out byte[] pubKey, out byte[] priKey, seed.Take(32).ToArray());
+                    account = Account.Build(KeyType.Ed25519, priKey, pubKey);
+                    break;
+
+                case KeyType.Sr25519:
+                    var miniSecret = new MiniSecret(seed, ExpandMode.Ed25519);
+                    account = Account.Build(KeyType.Sr25519, miniSecret.ExpandToSecret().ToBytes(), miniSecret.GetPair().Public.Key);
+                    break;
+
+                default:
+                    throw new NotImplementedException($"KeyType {keyType} isn't implemented!");
+            }
+
+            var randomBytes = new byte[48];
+
+            _random.GetBytes(randomBytes);
+
+            var memoryBytes = randomBytes.AsMemory();
+
+            var pswBytes = Encoding.UTF8.GetBytes(password);
+
+            var salt = memoryBytes.Slice(0, 16).ToArray();
+
+            pswBytes = SHA256.Create().ComputeHash(pswBytes);
+
+            var encryptedSeed =
+                ManagedAes.EncryptStringToBytes_Aes(
+                    Utils.Bytes2HexString(seed, Utils.HexStringFormat.Pure), pswBytes, salt);
+
+            var fileStore = new FileStore(keyType, account.Bytes, encryptedSeed, salt);
+            Caching.Persist(Wallet.ConcatWalletFileType(walletName), fileStore);
+
+            wallet = new Wallet(account, walletName, fileStore);
+
+            return true;
         }
 
         /// <summary>
@@ -421,18 +378,6 @@ namespace Substrate.NET.Wallet
         /// <summary>
         /// Verifies the signature.
         /// </summary>
-        /// <param name="data"></param>
-        /// <param name="signature"></param>
-        /// <param name="wrap"></param>
-        /// <returns></returns>
-        public bool VerifySignature(byte[] data, byte[] signature, bool wrap = true)
-        {
-            return VerifySignature(Account, data, signature, wrap);
-        }
-
-        /// <summary>
-        /// Verifies the signature.
-        /// </summary>
         /// <param name="signer">The signer.</param>
         /// <param name="data">The data.</param>
         /// <param name="signature">The signature.</param>
@@ -458,5 +403,34 @@ namespace Substrate.NET.Wallet
                         $"KeyType {signer.KeyType} is currently not implemented for verifying signatures.");
             }
         }
+
+        /// <summary>
+        /// Determines whether [is valid wallet name] [the specified wallet name].
+        /// </summary>
+        /// <param name="walletName">Name of the wallet.</param>
+        /// <returns>
+        ///   <c>true</c> if [is valid wallet name] [the specified wallet name]; otherwise, <c>false</c>.
+        /// </returns>
+        public static bool IsValidWalletName(string walletName) => walletName.Length > 4 && walletName.Length < 21 &&
+                   walletName.All(c => char.IsLetterOrDigit(c) || c.Equals('_'));
+
+        /// <summary>
+        /// Determines whether [is valid password] [the specified password].
+        /// </summary>
+        /// <param name="password">The password.</param>
+        /// <returns>
+        ///   <c>true</c> if [is valid password] [the specified password]; otherwise, <c>false</c>.
+        /// </returns>
+        public static bool IsValidPassword(string password)
+            => password.Length > 7 && password.Length < 21 && password.Any(char.IsUpper) &&
+                   password.Any(char.IsLower) && password.Any(char.IsDigit);
+
+        /// <summary>
+        /// Adds the type of the wallet file.
+        /// </summary>
+        /// <param name="walletName">Name of the wallet.</param>
+        /// <returns></returns>
+        public static string ConcatWalletFileType(string walletName)
+            => $"{walletName}.{FileType}";
     }
 }
