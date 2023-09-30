@@ -4,7 +4,6 @@ using Substrate.NetApi;
 using Substrate.NetApi.Model.Types;
 using System;
 using System.IO;
-using System.Security.Cryptography;
 using System.Text;
 
 namespace SubstrateNetWalletTest
@@ -46,11 +45,37 @@ namespace SubstrateNetWalletTest
         [Test]
         public void LoadWalletFromFileTest()
         {
-            var walletName = "dev_wallet";
-
-            Wallet.Load(walletName, out Wallet wallet1);
+            var walletName1 = "dev_wallet1";
+            Wallet.Load(walletName1, out Wallet wallet1);
             Assert.True(wallet1.IsStored);
             Assert.False(wallet1.IsUnlocked);
+            Assert.AreEqual("Ed25519",
+                wallet1.FileStore.KeyType.ToString());
+            Assert.AreEqual("5FfzQe73TTQhmSQCgvYocrr6vh1jJXEKB8xUB6tExfpKVCEZ",
+                Utils.GetAddressFrom(wallet1.FileStore.PublicKey));
+            Assert.AreEqual("0x17E39AC65C894EC263396E9B8720D78A7A5FE0CB6C5C05DC32E756DF3D5D2D9622DBFDB41CE0C9067B810BB03E1DCE9C89CFC061FBB063B616FF91F3AA31498158632A35601C91DFEE5DA869D44FA8A4",
+                Utils.Bytes2HexString(wallet1.FileStore.EncryptedSeed));
+            Assert.AreEqual("0x34F0627DB7C9BF1B580A597122622E95",
+                Utils.Bytes2HexString(wallet1.FileStore.Salt));
+            wallet1.Unlock("aA1234dd");
+            Assert.True(wallet1.IsUnlocked);
+
+            var walletName2 = "dev_wallet2";
+            Wallet.Load(walletName2, out Wallet wallet2);
+            Assert.True(wallet2.IsStored);
+            Assert.False(wallet2.IsUnlocked);
+            Assert.AreEqual("Sr25519",
+                wallet2.FileStore.KeyType.ToString());
+            Assert.AreEqual("5Fe24e21Ff5vRtuWa4ZNPv1EGQz1zBq1VtT8ojqfmzo9k11P",
+                Utils.GetAddressFrom(wallet2.FileStore.PublicKey));
+            Assert.AreEqual("0xDA24A6B58BE083B58E3F011929B8A454B5FE9F1B91961DCC766D3E9F6AFE7AF96AAC1372DBA4537856F95C7E47A365C10590ACC092DB5AA95D6ECF5E06167B799AC6247178B7C51AC9B8F64C16602659",
+                Utils.Bytes2HexString(wallet2.FileStore.EncryptedSeed));
+            Assert.AreEqual("0xD048477FCAD42D83402CDE3B2AF369D4",
+                Utils.Bytes2HexString(wallet2.FileStore.Salt));
+            wallet2.Unlock("aA1234dd");
+            Assert.True(wallet2.IsUnlocked);
+            Assert.AreEqual("0x6BED04FEE1504A49825339A68F601F7739FA7CEBF3B5E6A4A2476979F53CF40A112F6ED717AE8E8F5134C784A07DE6F3B2F7DA51D8117C566547A5038D4B3C27",
+                Utils.Bytes2HexString(wallet2.Account.PrivateKey));
         }
 
         [Test]
@@ -65,9 +90,6 @@ namespace SubstrateNetWalletTest
             // load wallet wallet
             Wallet.Load(walletName, out Wallet wallet2);
             Assert.True(wallet2.IsStored);
-            Assert.False(wallet2.IsUnlocked);
-
-            // unlock wallet with password
             Assert.False(wallet2.IsUnlocked);
             wallet2.Unlock("aA1234dd");
             Assert.True(wallet2.IsUnlocked);
@@ -87,9 +109,6 @@ namespace SubstrateNetWalletTest
             // read wallet
             Wallet.Load(walletName, out Wallet wallet2);
             Assert.True(wallet2.IsStored);
-            Assert.False(wallet2.IsUnlocked);
-
-            // unlock wallet with password
             Assert.False(wallet2.IsUnlocked);
             wallet2.Unlock("aA1234dd");
             Assert.True(wallet2.IsUnlocked);
@@ -113,8 +132,6 @@ namespace SubstrateNetWalletTest
             Wallet.Load(walletName, out Wallet wallet2);
             Assert.True(wallet2.IsStored);
             Assert.False(wallet2.IsUnlocked);
-
-            // unlock wallet with password
             wallet2.Unlock("aA1234dd");
             Assert.True(wallet2.IsUnlocked);
             Assert.AreEqual(wallet1.Account.Value, wallet2.Account.Value);
@@ -136,39 +153,9 @@ namespace SubstrateNetWalletTest
             Wallet.Load(walletName, out Wallet wallet2);
             Assert.True(wallet2.IsStored);
             Assert.False(wallet2.IsUnlocked);
-
-            // unlock wallet with password
             wallet2.Unlock("aA1234dd");
             Assert.True(wallet2.IsUnlocked);
             Assert.AreEqual(wallet1.Account.Value, wallet2.Account.Value);
-        }
-
-        [Test]
-        public void CreateAccountTest()
-        {
-            var mnemonic = "tornado glad segment lift squirrel top ball soldier joy sudden edit advice";
-            var address = "5CcaF7yE6YU67TyPHjSwd9DKiVBTAS2AktdxNG3DeLYs63gF";
-            var walletName = "acc_wallet";
-
-            // create new wallet with password and persist
-            Wallet.CreateFromMnemonic("aA1234dd", mnemonic, KeyType.Ed25519, Mnemonic.BIP39Wordlist.English, walletName, out Wallet wallet1);
-            Assert.True(wallet1.IsStored);
-            Assert.True(wallet1.IsUnlocked);
-            Assert.AreEqual(address, wallet1.Account.Value);
-
-            // recreate wallet
-            Wallet.CreateFromAccount(wallet1.Account, "aA1234dd", walletName + "_cp", out Wallet wallet2);
-            Assert.True(wallet2.IsStored);
-            Assert.True(wallet2.IsUnlocked);
-            Assert.AreEqual(address, wallet2.Account.Value);
-
-            // read wallet
-            Wallet.Load(walletName, out Wallet wallet3);
-            Assert.True(wallet3.IsStored);
-            Assert.False(wallet3.IsUnlocked);
-            Assert.AreEqual(address, wallet3.Account.Value);
-            wallet3.Unlock("aA1234dd");
-            Assert.True(wallet3.IsUnlocked);
         }
 
         [Test]
@@ -196,22 +183,6 @@ namespace SubstrateNetWalletTest
 
             Assert.True(Wallet.VerifySignature(accountEd, data, signatureEdNoWrap, false));
             Assert.True(Wallet.VerifySignature(accountEd, data, signatureEdWrap, true));
-        }
-
-        [Test]
-        public void FullCreationTest()
-        {
-            RandomNumberGenerator random = RandomNumberGenerator.Create();
-            var randomBytes = new byte[16];
-            random.GetBytes(randomBytes);
-            var mnemonic = string.Join(" ", Mnemonic.MnemonicFromEntropy(randomBytes, Mnemonic.BIP39Wordlist.English));
-            var tempAccount = Mnemonic.GetAccountFromMnemonic(mnemonic, "", KeyType.Sr25519);
-            var tempName = "HANS_IS";
-            var tempPassword = "aA1234dd";
-
-            Wallet.CreateFromAccount(tempAccount, tempPassword, tempName, out Wallet wallet1);
-            Assert.True(wallet1.IsStored);
-            Assert.True(wallet1.IsUnlocked);
         }
     }
 }

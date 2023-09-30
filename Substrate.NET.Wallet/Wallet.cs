@@ -6,7 +6,6 @@ using Substrate.NetApi;
 using Substrate.NetApi.Model.Types;
 using Substrate.NetApi.Sign;
 using System;
-using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
@@ -24,8 +23,6 @@ namespace Substrate.NET.Wallet
 
         private const string FileType = "json";
 
-        private const string DefaultWalletName = "wallet";
-
         private static readonly RandomNumberGenerator _random = RandomNumberGenerator.Create();
 
         public Account Account { get; private set; }
@@ -35,7 +32,7 @@ namespace Substrate.NET.Wallet
         public FileStore FileStore { get; private set; }
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         /// <param name="account"></param>
         /// <param name="walletName"></param>
@@ -104,7 +101,7 @@ namespace Substrate.NET.Wallet
                         break;
                 }
 
-                if (noCheck || !publicKey.SequenceEqual(FileStore.PublicKey))
+                if (!noCheck && !publicKey.SequenceEqual(FileStore.PublicKey))
                 {
                     throw new NotSupportedException("Public key check failed!");
                 }
@@ -121,7 +118,7 @@ namespace Substrate.NET.Wallet
         }
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         /// <param name="password"></param>
         /// <param name="noCheck"></param>
@@ -156,7 +153,7 @@ namespace Substrate.NET.Wallet
         /// <param name="signature"></param>
         /// <param name="wrap"></param>
         /// <returns></returns>
-        public bool TrySignMessage(byte[] data, out byte[] signature, bool wrap = true) 
+        public bool TrySignMessage(byte[] data, out byte[] signature, bool wrap = true)
             => TrySignMessage(Account, data, out signature, wrap);
 
         /// <summary>
@@ -300,7 +297,7 @@ namespace Substrate.NET.Wallet
             switch (keyType)
             {
                 case KeyType.Ed25519:
-                    Ed25519.KeyPairFromSeed(out byte[] pubKey, out byte[] priKey, seed);
+                    Ed25519.KeyPairFromSeed(out byte[] pubKey, out byte[] priKey, seed.Take(32).ToArray());
                     account = Account.Build(KeyType.Ed25519, priKey, pubKey);
                     break;
 
@@ -330,74 +327,12 @@ namespace Substrate.NET.Wallet
                     Utils.Bytes2HexString(seed, Utils.HexStringFormat.Pure), pswBytes, salt);
 
             var fileStore = new FileStore(keyType, account.Bytes, encryptedSeed, salt);
-
             Caching.Persist(Wallet.ConcatWalletFileType(walletName), fileStore);
 
             wallet = new Wallet(account, walletName, fileStore);
 
             return true;
         }
-
-        /// <summary>
-        ///
-        /// </summary>
-        /// <param name="password"></param>
-        /// <param name="keyType"></param>
-        /// <param name="walletName"></param>
-        /// <returns></returns>
-        /// <exception cref="NotImplementedException"></exception>
-        public static bool CreateFromAccount(Account account, string password, string walletName, out Wallet wallet)
-        {
-            wallet = null;
-
-            if (!IsValidWalletName(walletName))
-            {
-                Logger.Warning("Wallet name is invalid, please provide a proper wallet name. [A-Za-Z_]{20}.");
-                return false;
-            }
-
-            if (!IsValidPassword(password))
-            {
-                Logger.Warning(
-                    "Password isn't is invalid, please provide a proper password. Minmimu eight size and must have upper, lower and digits.");
-                return false;
-            }
-
-            Logger.Information("Creating new wallet.");
-
-            if (account == null || account.PrivateKey == null)
-            {
-                Logger.Warning("Account is null or doesn't have a private key.");
-                return false;
-            }
-
-            var randomBytes = new byte[48];
-
-            _random.GetBytes(randomBytes);
-
-            var memoryBytes = randomBytes.AsMemory();
-
-            var pswBytes = Encoding.UTF8.GetBytes(password);
-
-            var salt = memoryBytes.Slice(0, 16).ToArray();
-
-            var seed = memoryBytes.Slice(16, 32).ToArray();
-
-            pswBytes = SHA256.Create().ComputeHash(pswBytes);
-
-            var encryptedSeed =
-                ManagedAes.EncryptStringToBytes_Aes(
-                    Utils.Bytes2HexString(seed, Utils.HexStringFormat.Pure), pswBytes, salt);
-
-            var fileStore = new FileStore(account.KeyType, account.Bytes, encryptedSeed, salt);
-
-            Caching.Persist(Wallet.ConcatWalletFileType(walletName), fileStore);
-
-            wallet = new Wallet(account, walletName, fileStore);
-
-            return true;
-        }
-
 
         /// <summary>
         /// Tries the sign message.
@@ -486,7 +421,7 @@ namespace Substrate.NET.Wallet
         /// <returns>
         ///   <c>true</c> if [is valid password] [the specified password]; otherwise, <c>false</c>.
         /// </returns>
-        public static bool IsValidPassword(string password) 
+        public static bool IsValidPassword(string password)
             => password.Length > 7 && password.Length < 21 && password.Any(char.IsUpper) &&
                    password.Any(char.IsLower) && password.Any(char.IsDigit);
 
@@ -497,6 +432,5 @@ namespace Substrate.NET.Wallet
         /// <returns></returns>
         public static string ConcatWalletFileType(string walletName)
             => $"{walletName}.{FileType}";
-
     }
 }
