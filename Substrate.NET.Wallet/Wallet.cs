@@ -217,6 +217,8 @@ namespace Substrate.NET.Wallet
             var newAccount = new Account();
             newAccount.Create(fileStore.KeyType, fileStore.PublicKey);
 
+            Caching.Persist(Wallet.ConcatWalletFileType(walletName), fileStore);
+
             wallet = new Wallet(newAccount, walletName, fileStore);
 
             return true;
