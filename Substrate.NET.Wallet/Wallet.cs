@@ -198,6 +198,31 @@ namespace Substrate.NET.Wallet
         }
 
         /// <summary>
+        /// Load the wallet from file store object.
+        /// </summary>
+        /// <param name="walletName"></param>
+        /// <param name="fileStore"></param>
+        /// <param name="wallet"></param>
+        /// <returns></returns>
+        public static bool Load(string walletName, FileStore fileStore, out Wallet wallet)
+        {
+            wallet = null;
+
+            if (!IsValidWalletName(walletName))
+            {
+                Logger.Warning("Wallet name is invalid, please provide a proper wallet name. [A-Za-Z_]{20}.");
+                return false;
+            }
+
+            var newAccount = new Account();
+            newAccount.Create(fileStore.KeyType, fileStore.PublicKey);
+
+            wallet = new Wallet(newAccount, walletName, fileStore);
+
+            return true;
+        }
+
+        /// <summary>
         /// Creates the asynchronous.
         /// </summary>
         /// <param name="password">The password.</param>
