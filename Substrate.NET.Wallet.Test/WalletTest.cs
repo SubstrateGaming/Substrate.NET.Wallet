@@ -79,6 +79,29 @@ namespace SubstrateNetWalletTest
         }
 
         [Test]
+        public void LoadWalletFromFileStore()
+        {
+            var walletName1 = "dev_wallet1";
+            Wallet.Load(walletName1, out Wallet wallet1);
+            Assert.True(wallet1.IsStored);
+            Assert.False(wallet1.IsUnlocked);
+
+            var walletName2 = "dev_wallet3";
+            Wallet.Load(walletName2, wallet1.FileStore, out Wallet wallet2);
+
+            Assert.AreEqual("Ed25519",
+                wallet2.FileStore.KeyType.ToString());
+            Assert.AreEqual("5FfzQe73TTQhmSQCgvYocrr6vh1jJXEKB8xUB6tExfpKVCEZ",
+                Utils.GetAddressFrom(wallet2.FileStore.PublicKey));
+            Assert.AreEqual("0x17E39AC65C894EC263396E9B8720D78A7A5FE0CB6C5C05DC32E756DF3D5D2D9622DBFDB41CE0C9067B810BB03E1DCE9C89CFC061FBB063B616FF91F3AA31498158632A35601C91DFEE5DA869D44FA8A4",
+                Utils.Bytes2HexString(wallet2.FileStore.EncryptedSeed));
+            Assert.AreEqual("0x34F0627DB7C9BF1B580A597122622E95",
+                Utils.Bytes2HexString(wallet2.FileStore.Salt));
+            wallet2.Unlock("aA1234dd");
+            Assert.True(wallet2.IsUnlocked);
+        }
+
+        [Test]
         public void CreateWalletEd25519Test()
         {
             var walletName = "wallet1";
