@@ -2,13 +2,19 @@
 using Schnorrkel;
 using Schnorrkel.Keys;
 using Serilog;
+using Sodium;
+using Substrate.NET.Wallet.Model;
 using Substrate.NetApi;
 using Substrate.NetApi.Model.Types;
 using Substrate.NetApi.Sign;
 using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 using System.Text;
+
+[assembly: InternalsVisibleTo("Substrate.NET.Wallet.Test")]
 
 namespace Substrate.NET.Wallet
 {
@@ -29,7 +35,7 @@ namespace Substrate.NET.Wallet
 
         public string FileName { get; private set; }
 
-        public FileStore FileStore { get; private set; }
+        public EncodedData FileStore { get; private set; }
 
         /// <summary>
         ///
@@ -37,7 +43,7 @@ namespace Substrate.NET.Wallet
         /// <param name="account"></param>
         /// <param name="walletName"></param>
         /// <param name="fileStore"></param>
-        private Wallet(Account account, string walletName, FileStore fileStore)
+        private Wallet(Account account, string walletName, EncodedData fileStore)
         {
             Account = account;
             FileName = walletName;
@@ -77,36 +83,41 @@ namespace Substrate.NET.Wallet
 
             Logger.Information("Unlock wallet.");
 
+            if (!Enum.TryParse(FileStore.Encoding.Content[1], true, out KeyType keyType))
+            {
+                Logger.Warning("Couldn't parse key type defintion.");
+                return false;
+            }
+
             try
             {
-                var pswBytes = Encoding.UTF8.GetBytes(password);
-
-                pswBytes = SHA256.Create().ComputeHash(pswBytes);
-
-                var seed = ManagedAes.DecryptStringFromBytes_Aes(FileStore.EncryptedSeed, pswBytes, FileStore.Salt);
+                var publicKeyBytes = Utils.GetPublicKeyFrom(FileStore.Address);
+                var salt = GetSalt(Utils.GetPublicKeyFrom(FileStore.Address), Utils.HexToByteArray(FileStore.Meta.GenesisHash));
+                var seed = Decrypt(FileStore.Encoded, password, salt);
 
                 byte[] publicKey = null;
                 byte[] privateKey = null;
-                switch (FileStore.KeyType)
+
+                switch (keyType)
                 {
                     case KeyType.Ed25519:
-                        Ed25519.KeyPairFromSeed(out publicKey, out privateKey, Utils.HexToByteArray(seed));
+                        Ed25519.KeyPairFromSeed(out publicKey, out privateKey, seed);
                         break;
 
                     case KeyType.Sr25519:
-                        var miniSecret = new MiniSecret(Utils.HexToByteArray(seed), ExpandMode.Ed25519);
+                        var miniSecret = new MiniSecret(seed, ExpandMode.Ed25519);
                         var getPair = miniSecret.GetPair();
                         privateKey = getPair.Secret.ToBytes();
                         publicKey = getPair.Public.Key;
                         break;
                 }
 
-                if (!noCheck && !publicKey.SequenceEqual(FileStore.PublicKey))
+                if (!noCheck && !publicKey.SequenceEqual(publicKeyBytes))
                 {
                     throw new NotSupportedException("Public key check failed!");
                 }
 
-                Account = Account.Build(FileStore.KeyType, privateKey, publicKey);
+                Account = Account.Build(keyType, privateKey, publicKey);
             }
             catch (Exception e)
             {
@@ -115,6 +126,14 @@ namespace Substrate.NET.Wallet
             }
 
             return true;
+        }
+
+        internal static byte[] GetSalt(byte[] hash1, byte[] hash2)
+        {
+            byte[] concHash = new byte[hash1.Length + hash2.Length];
+            Array.Copy(hash1, 0, concHash, 0, hash1.Length);
+            Array.Copy(hash2, 0, concHash, hash1.Length, hash2.Length);
+            return SHA256.Create().ComputeHash(concHash);
         }
 
         /// <summary>
@@ -133,9 +152,15 @@ namespace Substrate.NET.Wallet
 
             Logger.Information("Lock wallet.");
 
+            if (!Enum.TryParse(FileStore.Encoding.Content[1], true, out KeyType keyType))
+            {
+                Logger.Warning("Couldn't parse key type defintion.");
+                return false;
+            }
+
             try
             {
-                Account = Account.Build(FileStore.KeyType, null, Account.Bytes);
+                Account = Account.Build(keyType, null, Account.Bytes);
             }
             catch (Exception e)
             {
@@ -183,14 +208,22 @@ namespace Substrate.NET.Wallet
             }
 
             var walletFileName = ConcatWalletFileType(walletName);
-            if (!Caching.TryReadFile(walletFileName, out FileStore fileStore))
+            if (!Caching.TryReadFile(walletFileName, out EncodedData fileStore))
             {
                 Logger.Warning("Failed to load wallet file '{walletFileName}'!", walletFileName);
                 return false;
             }
 
+            if (!Enum.TryParse(fileStore.Encoding.Content[1], true, out KeyType keyType))
+            {
+                Logger.Warning("Couldn't parse key type defintion.");
+                return false;
+            }
+
+            var publicKeyBytes = Utils.HexToByteArray(fileStore.Address);
+
             var newAccount = new Account();
-            newAccount.Create(fileStore.KeyType, fileStore.PublicKey);
+            newAccount.Create(keyType, publicKeyBytes);
 
             wallet = new Wallet(newAccount, walletName, fileStore);
 
@@ -198,13 +231,14 @@ namespace Substrate.NET.Wallet
         }
 
         /// <summary>
-        /// Load the wallet from file store object.
+        /// Load the wallet from the file store object.
         /// </summary>
         /// <param name="walletName"></param>
         /// <param name="fileStore"></param>
         /// <param name="wallet"></param>
+        /// <param name="tryPersist"></param>
         /// <returns></returns>
-        public static bool Load(string walletName, FileStore fileStore, out Wallet wallet)
+        public static bool Load(string walletName, EncodedData fileStore, out Wallet wallet, bool tryPersist = true)
         {
             wallet = null;
 
@@ -214,10 +248,29 @@ namespace Substrate.NET.Wallet
                 return false;
             }
 
-            var newAccount = new Account();
-            newAccount.Create(fileStore.KeyType, fileStore.PublicKey);
+            if (!Enum.TryParse(fileStore.Encoding.Content[1], true, out KeyType keyType))
+            {
+                Logger.Warning("Couldn't parse key type defintion.");
+                return false;
+            }
 
-            Caching.Persist(Wallet.ConcatWalletFileType(walletName), fileStore);
+            var publicKeyBytes = Utils.HexToByteArray(fileStore.Address);
+
+            var newAccount = new Account();
+            newAccount.Create(keyType, publicKeyBytes);
+
+            if (tryPersist)
+            {
+                try
+                {
+                    Caching.Persist(Wallet.ConcatWalletFileType(walletName), fileStore);
+                }
+                catch (Exception e)
+                {
+                    Logger.Warning("Failed to persist wallet file '{walletFileName}'! {error}", walletName, e);
+                    return false;
+                }
+            }
 
             wallet = new Wallet(newAccount, walletName, fileStore);
 
@@ -225,12 +278,16 @@ namespace Substrate.NET.Wallet
         }
 
         /// <summary>
-        /// Creates the asynchronous.
+        /// Creates the from random.
         /// </summary>
-        /// <param name="password">The password.</param>
-        /// <param name="walletName">Name of the wallet.</param>
+        /// <param name="password"></param>
+        /// <param name="keyType"></param>
+        /// <param name="walletName"></param>
+        /// <param name="wallet"></param>
+        /// <param name="tryPersist"></param>
         /// <returns></returns>
-        public static bool CreateFromRandom(string password, KeyType keyType, string walletName, out Wallet wallet)
+        /// <exception cref="NotImplementedException"></exception>
+        public static bool CreateFromRandom(string password, KeyType keyType, string walletName, out Wallet wallet, bool tryPersist = true)
         {
             wallet = null;
 
@@ -243,7 +300,7 @@ namespace Substrate.NET.Wallet
             if (!IsValidPassword(password))
             {
                 Logger.Warning(
-                    "Password isn't is invalid, please provide a proper password. Minmimu eight size and must have upper, lower and digits.");
+                    "Password is invalid, please provide a proper password. Minmimu eight size and must have upper, lower and digits.");
                 return false;
             }
 
@@ -255,9 +312,7 @@ namespace Substrate.NET.Wallet
 
             var memoryBytes = randomBytes.AsMemory();
 
-            var pswBytes = Encoding.UTF8.GetBytes(password);
-
-            var salt = memoryBytes.Slice(0, 16).ToArray();
+            var hash = memoryBytes.Slice(0, 16).ToArray();
 
             var seed = memoryBytes.Slice(16, 32).ToArray();
 
@@ -278,28 +333,167 @@ namespace Substrate.NET.Wallet
                     throw new NotImplementedException($"KeyType {keyType} isn't implemented!");
             }
 
-            pswBytes = SHA256.Create().ComputeHash(pswBytes);
+            var fileStore = GetFileStore(account.Value, account.KeyType, hash, seed, password);
 
-            var encryptedSeed =
-                ManagedAes.EncryptStringToBytes_Aes(
-                    Utils.Bytes2HexString(seed, Utils.HexStringFormat.Pure), pswBytes, salt);
-
-            var fileStore = new FileStore(keyType, account.Bytes, encryptedSeed, salt);
-            Caching.Persist(Wallet.ConcatWalletFileType(walletName), fileStore);
+            if (tryPersist)
+            {
+                try
+                {
+                    Caching.Persist(Wallet.ConcatWalletFileType(walletName), fileStore);
+                }
+                catch (Exception e)
+                {
+                    Logger.Warning("Failed to persist wallet file '{walletFileName}'! {error}", walletName, e);
+                    return false;
+                }
+            }
 
             wallet = new Wallet(account, walletName, fileStore);
+
+            return !tryPersist || wallet.Save(password);
+        }
+
+        private static EncodedData GetFileStore(string address, KeyType keyType, byte[] hash, byte[] seed, string password)
+        {
+            var salt = GetSalt(Utils.GetPublicKeyFrom(address), hash);
+
+            return new EncodedData
+            {
+                Encoded = Encrypt(seed, password, salt),
+                Encoding = new Model.EncodingInfo
+                {
+                    Content = new List<string> { "pkcs8", keyType.ToString().ToLower() },
+                    Type = new List<string> { "scrypt", "xsalsa20-poly1305" },
+                    Version = "3"
+                },
+                Address = address,
+                Meta = new Metadata
+                {
+                    GenesisHash = Utils.Bytes2HexString(hash),
+                    IsHardware = false,
+                    Name = "SUBSTRATE",
+                    Tags = new List<string>(),
+                    WhenCreated = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()
+                }
+            };
+        }
+
+        private bool Save(string password)
+        {
+            if (!IsValidPassword(password))
+            {
+                Logger.Warning(
+                    "Password is invalid, please provide a proper password. Minmimu eight size and must have upper, lower and digits.");
+                return false;
+            }
+
+            if (!IsUnlocked)
+            {
+                Logger.Warning("Unlock wallet first, before you store it.");
+                return false;
+            }
+
+            Caching.Persist(Wallet.ConcatWalletFileType(FileName), FileStore);
 
             return true;
         }
 
         /// <summary>
-        /// Creates the asynchronous.
+        /// Encrypts the specified data.
         /// </summary>
-        /// <param name="password">The password.</param>
-        /// <param name="mnemonic">The mnemonic.</param>
-        /// <param name="walletName">Name of the wallet.</param>
+        /// <param name="data"></param>
+        /// <param name="password"></param>
+        /// <param name="salt"></param>
         /// <returns></returns>
-        public static bool CreateFromMnemonic(string password, string mnemonic, KeyType keyType, Mnemonic.BIP39Wordlist bIP39Wordlist, string walletName, out Wallet wallet)
+        public static string Encrypt(byte[] data, string password, byte[] salt)
+        {
+            // Derive the encryption key from the password using Scrypt
+            byte[] derivedKey = DeriveKeyUsingScrypt(password, salt, 32); // 32 bytes = 256 bits
+
+            // Encrypt the content using the derived key and XSalsa20-Poly1305
+            byte[] nonce;
+            byte[] encryptedDataBytes = EncryptUsingXSalsa20Poly1305(data, derivedKey, out nonce);
+
+            // Combine nonce and encrypted data
+            byte[] combined = new byte[nonce.Length + encryptedDataBytes.Length];
+            Array.Copy(nonce, 0, combined, 0, nonce.Length);
+            Array.Copy(encryptedDataBytes, 0, combined, nonce.Length, encryptedDataBytes.Length);
+
+            return Convert.ToBase64String(combined);
+        }
+
+        /// <summary>
+        /// Decrypts the specified encoded.
+        /// </summary>
+        /// <param name="encoded"></param>
+        /// <param name="password"></param>
+        /// <param name="salt"></param>
+        /// <returns></returns>
+        public static byte[] Decrypt(string encoded, string password, byte[] salt)
+        {
+            byte[] combined = Convert.FromBase64String(encoded);
+
+            // Extract nonce and encrypted data
+            byte[] nonce = new byte[24];
+            byte[] encryptedDataBytes = new byte[combined.Length - nonce.Length];
+            Array.Copy(combined, 0, nonce, 0, nonce.Length);
+            Array.Copy(combined, nonce.Length, encryptedDataBytes, 0, encryptedDataBytes.Length);
+
+            // Derive the encryption key from the password using Scrypt
+            byte[] derivedKey = DeriveKeyUsingScrypt(password, salt, 32); // 32 bytes = 256 bits
+
+            // Decrypt the content using the derived key and XSalsa20-Poly1305
+            return DecryptUsingXSalsa20Poly1305(encryptedDataBytes, derivedKey, nonce);
+        }
+
+        /// <summary>
+        /// Derives the key using scrypt.
+        /// </summary>
+        /// <param name="password"></param>
+        /// <param name="salt"></param>
+        /// <param name="keyLengthInBytes"></param>
+        /// <returns></returns>
+        private static byte[] DeriveKeyUsingScrypt(string password, byte[] salt, int keyLengthInBytes)
+            => PasswordHash.ScryptHashBinary(Encoding.UTF8.GetBytes(password), salt, PasswordHash.Strength.Medium, keyLengthInBytes);
+
+        /// <summary>
+        /// Encrypts the using XSalsa20Poly1305.
+        /// </summary>
+        /// <param name="plainText"></param>
+        /// <param name="key"></param>
+        /// <param name="nonce"></param>
+        /// <returns></returns>
+        private static byte[] EncryptUsingXSalsa20Poly1305(byte[] plainText, byte[] key, out byte[] nonce)
+        {
+            nonce = SecretBox.GenerateNonce();
+            return SecretBox.Create(plainText, nonce, key);
+        }
+
+        /// <summary>
+        /// Decrypts the using XSalsa20Poly1305.
+        /// </summary>
+        /// <param name="cipherText"></param>
+        /// <param name="key"></param>
+        /// <param name="nonce"></param>
+        /// <returns></returns>
+        private static byte[] DecryptUsingXSalsa20Poly1305(byte[] cipherText, byte[] key, byte[] nonce)
+        {
+            return SecretBox.Open(cipherText, nonce, key);
+        }
+
+        /// <summary>
+        /// Creates the from mnemonic.
+        /// </summary>
+        /// <param name="password"></param>
+        /// <param name="mnemonic"></param>
+        /// <param name="keyType"></param>
+        /// <param name="bIP39Wordlist"></param>
+        /// <param name="walletName"></param>
+        /// <param name="wallet"></param>
+        /// <param name="tryPersist"></param>
+        /// <returns></returns>
+        /// <exception cref="NotImplementedException"></exception>
+        public static bool CreateFromMnemonic(string password, string mnemonic, KeyType keyType, Mnemonic.BIP39Wordlist bIP39Wordlist, string walletName, out Wallet wallet, bool tryPersist = true)
         {
             wallet = null;
 
@@ -343,18 +537,22 @@ namespace Substrate.NET.Wallet
 
             var memoryBytes = randomBytes.AsMemory();
 
-            var pswBytes = Encoding.UTF8.GetBytes(password);
+            var hash = memoryBytes.Slice(0, 16).ToArray();
 
-            var salt = memoryBytes.Slice(0, 16).ToArray();
+            var fileStore = GetFileStore(account.Value, account.KeyType, hash, seed, password);
 
-            pswBytes = SHA256.Create().ComputeHash(pswBytes);
-
-            var encryptedSeed =
-                ManagedAes.EncryptStringToBytes_Aes(
-                    Utils.Bytes2HexString(seed, Utils.HexStringFormat.Pure), pswBytes, salt);
-
-            var fileStore = new FileStore(keyType, account.Bytes, encryptedSeed, salt);
-            Caching.Persist(Wallet.ConcatWalletFileType(walletName), fileStore);
+            if (tryPersist)
+            {
+                try
+                {
+                    Caching.Persist(Wallet.ConcatWalletFileType(walletName), fileStore);
+                }
+                catch (Exception e)
+                {
+                    Logger.Warning("Failed to persist wallet file '{walletFileName}'! {error}", walletName, e);
+                    return false;
+                }
+            }
 
             wallet = new Wallet(account, walletName, fileStore);
 
