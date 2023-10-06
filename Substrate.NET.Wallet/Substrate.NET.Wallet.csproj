@@ -3,7 +3,7 @@
 	<PropertyGroup>
 		<PackageId>Substrate.NET.Wallet</PackageId>
 		<TargetFrameworks>netstandard2.0;netstandard2.1;net6.0</TargetFrameworks>
-		<Version>1.0.5</Version>
+		<Version>1.0.6</Version>
 		<Company>BloGa Tech AG</Company>
 		<Authors>Cedric Decoster</Authors>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
@@ -22,6 +22,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
+	  <PackageReference Include="Sodium.Core" Version="1.3.4" />
 	  <PackageReference Include="Substrate.NET.API" Version="0.9.8" />
 	</ItemGroup>
 

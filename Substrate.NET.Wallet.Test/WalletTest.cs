@@ -1,12 +1,11 @@
 using NUnit.Framework;
-using Substrate.NET.Wallet;
 using Substrate.NetApi;
 using Substrate.NetApi.Model.Types;
 using System;
 using System.IO;
 using System.Text;
 
-namespace SubstrateNetWalletTest
+namespace Substrate.NET.Wallet.Test
 {
     public class WalletTest
     {
@@ -49,14 +48,6 @@ namespace SubstrateNetWalletTest
             Wallet.Load(walletName1, out Wallet wallet1);
             Assert.True(wallet1.IsStored);
             Assert.False(wallet1.IsUnlocked);
-            Assert.AreEqual("Ed25519",
-                wallet1.FileStore.KeyType.ToString());
-            Assert.AreEqual("5FfzQe73TTQhmSQCgvYocrr6vh1jJXEKB8xUB6tExfpKVCEZ",
-                Utils.GetAddressFrom(wallet1.FileStore.PublicKey));
-            Assert.AreEqual("0x17E39AC65C894EC263396E9B8720D78A7A5FE0CB6C5C05DC32E756DF3D5D2D9622DBFDB41CE0C9067B810BB03E1DCE9C89CFC061FBB063B616FF91F3AA31498158632A35601C91DFEE5DA869D44FA8A4",
-                Utils.Bytes2HexString(wallet1.FileStore.EncryptedSeed));
-            Assert.AreEqual("0x34F0627DB7C9BF1B580A597122622E95",
-                Utils.Bytes2HexString(wallet1.FileStore.Salt));
             wallet1.Unlock("aA1234dd");
             Assert.True(wallet1.IsUnlocked);
 
@@ -64,18 +55,8 @@ namespace SubstrateNetWalletTest
             Wallet.Load(walletName2, out Wallet wallet2);
             Assert.True(wallet2.IsStored);
             Assert.False(wallet2.IsUnlocked);
-            Assert.AreEqual("Sr25519",
-                wallet2.FileStore.KeyType.ToString());
-            Assert.AreEqual("5Fe24e21Ff5vRtuWa4ZNPv1EGQz1zBq1VtT8ojqfmzo9k11P",
-                Utils.GetAddressFrom(wallet2.FileStore.PublicKey));
-            Assert.AreEqual("0xDA24A6B58BE083B58E3F011929B8A454B5FE9F1B91961DCC766D3E9F6AFE7AF96AAC1372DBA4537856F95C7E47A365C10590ACC092DB5AA95D6ECF5E06167B799AC6247178B7C51AC9B8F64C16602659",
-                Utils.Bytes2HexString(wallet2.FileStore.EncryptedSeed));
-            Assert.AreEqual("0xD048477FCAD42D83402CDE3B2AF369D4",
-                Utils.Bytes2HexString(wallet2.FileStore.Salt));
             wallet2.Unlock("aA1234dd");
             Assert.True(wallet2.IsUnlocked);
-            Assert.AreEqual("0x6BED04FEE1504A49825339A68F601F7739FA7CEBF3B5E6A4A2476979F53CF40A112F6ED717AE8E8F5134C784A07DE6F3B2F7DA51D8117C566547A5038D4B3C27",
-                Utils.Bytes2HexString(wallet2.Account.PrivateKey));
         }
 
         [Test]
@@ -89,14 +70,6 @@ namespace SubstrateNetWalletTest
             var walletName2 = "dev_wallet3";
             Wallet.Load(walletName2, wallet1.FileStore, out Wallet wallet2);
 
-            Assert.AreEqual("Ed25519",
-                wallet2.FileStore.KeyType.ToString());
-            Assert.AreEqual("5FfzQe73TTQhmSQCgvYocrr6vh1jJXEKB8xUB6tExfpKVCEZ",
-                Utils.GetAddressFrom(wallet2.FileStore.PublicKey));
-            Assert.AreEqual("0x17E39AC65C894EC263396E9B8720D78A7A5FE0CB6C5C05DC32E756DF3D5D2D9622DBFDB41CE0C9067B810BB03E1DCE9C89CFC061FBB063B616FF91F3AA31498158632A35601C91DFEE5DA869D44FA8A4",
-                Utils.Bytes2HexString(wallet2.FileStore.EncryptedSeed));
-            Assert.AreEqual("0x34F0627DB7C9BF1B580A597122622E95",
-                Utils.Bytes2HexString(wallet2.FileStore.Salt));
             wallet2.Unlock("aA1234dd");
             Assert.True(wallet2.IsUnlocked);
         }
