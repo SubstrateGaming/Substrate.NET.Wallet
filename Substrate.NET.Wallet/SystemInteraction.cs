@@ -46,6 +46,14 @@ namespace Substrate.NET.Wallet
         public static Action<string, string> Persist { get; set; }
 
         /// <summary>
+        /// Deletes the persist.
+        /// </summary>
+        /// <value>
+        /// The delete.
+        /// </value>
+        public static Action<string> Delete { get; set; }
+
+        /// <summary>
         /// Reads all text.
         /// </summary>
         /// <param name="path">The path.</param>

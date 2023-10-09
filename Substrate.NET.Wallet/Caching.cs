@@ -45,6 +45,23 @@ namespace Substrate.NET.Wallet
             SystemInteraction.Persist(path, objEncrypted);
         }
 
+        /// <summary>
+        /// Persists the specified path.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="path">The path.</param>
+        /// <param name="obj">The object.</param>
+        public static bool Delete(string path)
+        {
+            if (SystemInteraction.DataExists(path))
+            {
+                SystemInteraction.Delete(path);
+                return !SystemInteraction.DataExists(path);
+            }
+
+            return false;
+        }
+
         //unused, already encrypted maybe for later
         private static string Encrypt(string str)
         {
