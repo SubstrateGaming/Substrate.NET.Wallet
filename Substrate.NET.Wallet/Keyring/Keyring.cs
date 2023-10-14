@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using Schnorrkel.Keys;
 using Substrate.NET.Wallet.Extensions;
 using Substrate.NetApi;
 using Substrate.NetApi.Model.Types;
@@ -53,14 +54,17 @@ namespace Substrate.NET.Wallet.Keyring
             return keyringPair;
         }
 
-        public KeyringPair AddFromMnemonic(string mnemonic, Meta meta)
+        public KeyringPair AddFromMnemonic(string[] mnemonic, Meta meta, KeyType keyType)
+            => AddFromMnemonic(string.Join(" ", mnemonic), meta, keyType);
+
+        public KeyringPair AddFromMnemonic(string mnemonic, Meta meta, KeyType keyType)
         {
-            return AddFromUri(mnemonic, meta);
+            return AddFromUri(mnemonic, meta, keyType);
         }
 
-        public KeyringPair AddFromUri(string uri, Meta meta)
+        public KeyringPair AddFromUri(string uri, Meta meta, KeyType keyType)
         {
-            var pair = CreateFromUri(uri, meta);
+            var pair = CreateFromUri(uri, meta, keyType);
             AddPair(pair);
 
             return pair;
@@ -105,14 +109,38 @@ namespace Substrate.NET.Wallet.Keyring
                 walletEncryption.meta, encoded, encryptedEncoding, Ss58Format);
         }
 
-        public KeyringPair CreateFromUri(string uri, Meta meta)
+        public KeyringPair CreateFromUri(string uri, Meta meta, KeyType keyType)
         {
             if (string.IsNullOrEmpty(uri)) throw new ArgumentNullException("uri");
 
-            var resolvedUrl = uri.StartsWith("//") ? $"{Uri.DEV_PHRASE}{uri}" : uri;
-            var extract = Uri.KeyExtractUri(resolvedUrl);
+            var resolvedUri = uri.StartsWith("//") ? $"{Uri.DEV_PHRASE}{uri}" : uri;
+            var extract = Uri.KeyExtractUri(resolvedUri);
 
-            throw new NotImplementedException();
+            bool isPhraseHex = extract.Phrase.IsHex();
+
+            byte[] seed;
+            if (isPhraseHex)
+            {
+                seed = Utils.HexToByteArray(extract.Phrase);
+            } else
+            {
+                int phraseLength = MnemonicExtensions.ToMnemonicArray(extract.Phrase).Length;
+                // Mnemonic size should be equal to 12, 15, 18, 21 or 24 words
+                if (new byte[5] { 12, 15, 18, 21, 24 }.Any(l => l == phraseLength))
+                {
+                    seed = MnemonicExtensions.MnemonicToMiniSecret(extract.Phrase, extract.Password);
+                } else
+                {
+                    if(phraseLength > 32)
+                        throw new InvalidOperationException("Specified phrase is not a valid mnemonic and is invalid as a raw seed at > 32 bytes");
+
+                    seed = extract.Phrase.PadRight(32).ToBytes();
+                }
+            }
+
+            var derivedPair = MnemonicExtensions.KeyFromPath(KeyPairFromSeed(keyType, seed), extract.Path, keyType);
+
+            return Pair.CreatePair(new KeyringAddress() { KeyType = keyType, ToSS58 = Utils.GetAddressFrom }, derivedPair, meta, null, null, Ss58Format);
         }
         #endregion
 
@@ -146,6 +174,23 @@ namespace Substrate.NET.Wallet.Keyring
                 throw new InvalidOperationException("Unable to decode using the supplied passphrase");
 
             return encoded;
+        }
+
+        public PairInfo KeyPairFromSeed(KeyType keyType, byte[] seed)
+        {
+            switch (keyType)
+            {
+                case KeyType.Ed25519:
+                    Chaos.NaCl.Ed25519.KeyPairFromSeed(out byte[] pubKey, out byte[] priKey, seed);
+                    return new PairInfo(pubKey ,priKey);
+
+                case KeyType.Sr25519:
+                    var miniSecret = new MiniSecret(seed, ExpandMode.Ed25519);
+                    return new PairInfo(miniSecret.GetPair().Public.Key, miniSecret.ExpandToSecret().ToBytes());
+
+                default:
+                    throw new NotImplementedException($"KeyType {keyType} isn't implemented!");
+            }
         }
 
         private static void ensureDataIsSet(byte[] data, string message = "No data available")

@@ -42,7 +42,8 @@ namespace Substrate.NET.Wallet.Keyring
 
         public byte[] Recode(string password)
         {
-            return Pkcs8.Encode(password, Encoded, EncryptedEncoding);
+            //return Pkcs8.Encode(password, Encoded, EncryptedEncoding);
+            return Pair.EncodePair(password, PairInformation);
         }
 
         public WalletEncryption ToWalletEncryption(string password)
@@ -50,7 +51,8 @@ namespace Substrate.NET.Wallet.Keyring
             if (Meta.whenCreated == default)
                 Meta.whenCreated = DateTime.Now.Ticks;
 
-            return Pair.ToJsonPair(KeyType, Address, Meta, Recode(password), !string.IsNullOrEmpty(password));
+            Encoded = Recode(password);
+            return Pair.ToJsonPair(KeyType, Address, Meta, Encoded, !string.IsNullOrEmpty(password));
         }
 
         public string ToJson(string password)

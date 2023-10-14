@@ -1,0 +1,22 @@
+{
+  "encoded": "nNGqGAx+UitOywTr4stCoB+2vrAcMsNvzeCXrsPJLsoAgAAAAQAAAAgAAABIjC4iGpJLEqHl6Q4XYnJ1B7CmW30mtxCBsN+8A2m+BCsGIs8QyaaqLYDppJ+9RNi2NMS4nbRU2FcNIZhZG3w6ophal7SB/Tue5VxOjcx4DBEB0Thho9T3FMHuE6ezcgICLlNXU/EHJuyVX8kPWzWchfkTTWMXqJQGldEnaz7R+aDi51MnUzTevyn421AR9iNeuH/QUAxtSBH2Y9qU",
+  "encoding": {
+    "content": [
+      "pkcs8",
+      "Sr25519"
+    ],
+    "type": [
+      "scrypt",
+      "xsalsa20-poly1305"
+    ],
+    "version": 3
+  },
+  "address": "15N38pUffZB6d8pkNAf6ydSoy5oTZoTruphv8Hm7J8GRf8Ci",
+  "meta": {
+    "genesisHash": "0x91b171bb158e2d3848fa23a9f1c25182fb8e20313b2c1eb49219da7a70ce90c3",
+    "isHardware": false,
+    "name": "SubstrateAccount2",
+    "tags": null,
+    "whenCreated": 638328838027792000
+  }
+}

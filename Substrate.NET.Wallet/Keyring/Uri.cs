@@ -24,26 +24,26 @@ namespace Substrate.NET.Wallet.Keyring
         }
     }
 
-    public class Uri
+    public static class Uri
     {
         public const string DEV_PHRASE = "bottom drive obey lake curtain smoke basket hold race lonely fit walk";
         public const string DEV_SEED = "0xfac7959dbfe72f052e5a0c3c8d6530f202b02fd8f9f5ca3580ec8deb7797479e";
 
-        public static Regex CaptureUri = new Regex("/^(\\w+( \\w+)*)((\\/\\/?[^/]+)*)(\\/\\/\\/(.*))?$/");
-        public static Regex CaptureJunction = new Regex("/\\/(\\/?)([^/]+)/g");
+        public const string CaptureUriPattern = "^(\\w+( \\w+)*)((\\/\\/?[^\\/]+)*)(\\/\\/\\/(.*))?$";
+        public const string CaptureJunctionPattern = "\\/(\\/?)([^/]+)";
 
-        public static KeyExtractResult KeyExtractUri(string url)
+        public static KeyExtractResult KeyExtractUri(string suri)
         {
-            var match = CaptureUri.Match(url);
+            var match = Regex.Match(suri, CaptureUriPattern, RegexOptions.None, TimeSpan.FromSeconds(100));
 
             if (!match.Success)
             {
                 throw new InvalidOperationException("Unable to match provided value to a secret URI");
             }
 
-            var phrase = match.Captures[1].Value;
-            var derivePath = match.Captures[3].Value;
-            var password = match.Captures[6].Value;
+            var phrase = match.Groups[1].Value;
+            var derivePath = match.Groups[3].Value;
+            var password = match.Groups[6].Value;
 
             return new KeyExtractResult()
             {
@@ -56,18 +56,26 @@ namespace Substrate.NET.Wallet.Keyring
 
         public static (string[] parts, DeriveJunction[] path) KeyExtractPath(string derivePath)
         {
-            //var parts = CaptureJunction.Match(derivePath);
-            //var paths = new List<DeriveJunction>();
+            var parts = Regex.Match(derivePath, CaptureJunctionPattern, RegexOptions.None, TimeSpan.FromMilliseconds(100));
+            var paths = new List<DeriveJunction>();
 
-            //string construct = string.Empty;
+            string constructed = string.Empty;
 
-            //if(parts.Success) {
-            //    foreach(var p in parts.Groups)
+            //if (parts.Success)
+            //{
+            //    foreach (var p in parts.Groups)
             //    {
             //        paths.Add(DeriveJunction.From(p))
             //    }
             //}
-            throw new NotImplementedException();
+            //throw new NotImplementedException();
+
+            if(constructed != derivePath)
+            {
+                throw new InvalidOperationException($"Re-constructed path ${constructed} does not match input");
+            }
+
+            return (new string[] {}, paths.ToArray());
         }
     }
 }

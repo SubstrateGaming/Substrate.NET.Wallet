@@ -1,5 +1,7 @@
-﻿using System;
+﻿using Schnorrkel.Merlin;
+using System;
 using System.Linq;
+using System.Security.Cryptography;
 
 namespace Substrate.NET.Wallet.Extensions
 {
@@ -8,12 +10,13 @@ namespace Substrate.NET.Wallet.Extensions
         /// <summary>
         /// Load a byte array with random bytes
         /// </summary>
-        /// <param name="value"></param>
+        /// <param name="data"></param>
         /// <returns></returns>
-        public static byte[] Populate(this byte[] value)
+        public static byte[] Populate(this byte[] data)
         {
-            new Random().NextBytes(value);
-            return value;
+            var randomGenerator = RandomNumberGenerator.Create();
+            randomGenerator.GetBytes(data);
+            return data;
         }
 
         public static byte[] BytesFixLength(this byte[] value, int bitLength = -1, bool atStart = false)

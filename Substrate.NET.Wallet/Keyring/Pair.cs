@@ -128,7 +128,7 @@ namespace Substrate.NET.Wallet.Keyring
                 encoded = Convert.ToBase64String(encoded),
                 encoding = new Encoding()
                 {
-                    content = new List<string>() { "pkcs8", keyType.ToString() },
+                    content = new List<string>() { "pkcs8", keyType.ToString().ToLower() },
                     type = isEncrypted ? ENCODING.ToList() : ENCODING_NONE.ToList(),
                     version = ENCODING_VERSION
                 },

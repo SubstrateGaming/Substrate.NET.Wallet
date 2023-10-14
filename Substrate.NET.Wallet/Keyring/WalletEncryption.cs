@@ -52,6 +52,11 @@ namespace Substrate.NET.Wallet.Keyring
         public Encoding encoding { get; set; }
         public string address { get; set; }
         public Meta meta { get; set; }
+
+        public string ToJson()
+        {
+            return JsonConvert.SerializeObject(this);
+        }
     }
 
     public class Encoding
