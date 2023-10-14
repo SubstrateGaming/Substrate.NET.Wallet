@@ -56,7 +56,7 @@ namespace Substrate.NET.Wallet.Keyring
 
         public static (string[] parts, DeriveJunction[] path) KeyExtractPath(string derivePath)
         {
-            var parts = Regex.Match(derivePath, CaptureJunctionPattern, RegexOptions.None, TimeSpan.FromMilliseconds(100));
+            _ = Regex.Match(derivePath, CaptureJunctionPattern, RegexOptions.None, TimeSpan.FromMilliseconds(100));
             var paths = new List<DeriveJunction>();
 
             string constructed = string.Empty;

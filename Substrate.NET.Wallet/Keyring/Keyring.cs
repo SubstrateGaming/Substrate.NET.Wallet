@@ -70,9 +70,12 @@ namespace Substrate.NET.Wallet.Keyring
             return pair;
         }
 
-        public KeyringPair AddFromSeed(byte[] seed, Meta meta)
+        public KeyringPair AddFromSeed(byte[] seed, Meta meta, KeyType keyType)
         {
-            throw new NotImplementedException();
+            var pair = Pair.CreatePair(new KeyringAddress() { KeyType = keyType, ToSS58 = Utils.GetAddressFrom }, KeyPairFromSeed(keyType, seed), meta, null, null, Ss58Format);
+            AddPair(pair);
+
+            return pair;
         }
         #endregion
 
@@ -124,11 +127,11 @@ namespace Substrate.NET.Wallet.Keyring
                 seed = Utils.HexToByteArray(extract.Phrase);
             } else
             {
-                int phraseLength = MnemonicExtensions.ToMnemonicArray(extract.Phrase).Length;
+                int phraseLength = Mnemonic.ToMnemonicArray(extract.Phrase).Length;
                 // Mnemonic size should be equal to 12, 15, 18, 21 or 24 words
                 if (new byte[5] { 12, 15, 18, 21, 24 }.Any(l => l == phraseLength))
                 {
-                    seed = MnemonicExtensions.MnemonicToMiniSecret(extract.Phrase, extract.Password);
+                    seed = Mnemonic.MnemonicToMiniSecret(extract.Phrase, extract.Password);
                 } else
                 {
                     if(phraseLength > 32)
@@ -138,7 +141,7 @@ namespace Substrate.NET.Wallet.Keyring
                 }
             }
 
-            var derivedPair = MnemonicExtensions.KeyFromPath(KeyPairFromSeed(keyType, seed), extract.Path, keyType);
+            var derivedPair = Mnemonic.KeyFromPath(KeyPairFromSeed(keyType, seed), extract.Path, keyType);
 
             return Pair.CreatePair(new KeyringAddress() { KeyType = keyType, ToSS58 = Utils.GetAddressFrom }, derivedPair, meta, null, null, Ss58Format);
         }

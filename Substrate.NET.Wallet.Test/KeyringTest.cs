@@ -4,6 +4,7 @@ using System;
 using System.IO;
 using Substrate.NET.Wallet.Extensions;
 using Substrate.NET.Wallet.Keyring;
+using static Substrate.NET.Wallet.Keyring.Mnemonic;
 
 namespace Substrate.NET.Wallet.Test
 {
@@ -13,6 +14,14 @@ namespace Substrate.NET.Wallet.Test
         {
             return File.ReadAllText($"{AppContext.BaseDirectory}\\Data\\{jsonFile}");
         }
+
+        private Meta defaultMeta = new Meta()
+        {
+            genesisHash = "0x91b171bb158e2d3848fa23a9f1c25182fb8e20313b2c1eb49219da7a70ce90c3",
+            isHardware = false,
+            name = "SubstrateAccount2",
+            tags = null
+        };
 
         [Test]
         [TestCase("json_account1.json", "SUBSTRATE")]
@@ -50,74 +59,40 @@ namespace Substrate.NET.Wallet.Test
         }
 
         [Test]
-        [TestCase("json_account1.json")]
-        public void ValidJson_WithNewPassword_ShouldRewriteJson(string json)
+        [TestCase("json_account1.json", "SUBSTRATE")]
+        public void ImportFromValidJson_ThenDuplicateAccount_ShouldHaveSamePrivateKey(string json, string password)
         {
             var input = readJsonFromFile(json);
 
             var keyring = new Keyring.Keyring();
             var keyringPair1 = keyring.AddFromJson(input);
 
-            var walletEncryptionSamePassword = keyringPair1.ToWalletEncryption("SUBSTRATE");
+            var walletEncryptionSamePassword = keyringPair1.ToWalletEncryption(password);
             var keyringPair2 = keyring.AddFromJson(walletEncryptionSamePassword);
 
             Assert.That(keyringPair1.PairInformation.PublicKey, Is.EqualTo(keyringPair2.PairInformation.PublicKey));
 
-            // Both are lock
-            Assert.That(keyringPair1.IsLocked, Is.True);
+            Assert.That(keyringPair1.IsLocked, Is.False);
             Assert.That(keyringPair2.IsLocked, Is.True);
 
-            keyringPair1.Unlock("SUBSTRATE");
-            keyringPair2.Unlock("SUBSTRATE");
+            keyringPair2.Unlock(password);
             Assert.That(keyringPair1.PairInformation.SecretKey, Is.EqualTo(keyringPair2.PairInformation.SecretKey));
         }
 
-        [Test, Ignore("WIP")]
-        [TestCase("13zUtDC1UdzLu3ac7buXexHS1S5wAp5z1YmgsdiLHJpU7LtM")]
-        public void AddFromMnemonic_WithValidMnemonic_ShouldSuceed(string address)
+        [TestCase("fun claim spawn flavor enable enrich advice canyon aisle aware energy level")]
+        public void AddFromMnemonic_ShouldSucceed(string mnemonic)
         {
-            var meta = new Meta()
-            {
-                genesisHash = "0x35a06bfec2edf0ff4be89a6428ccd9ff5bd0167d618c5a0d4341f9600a458d14",
-                isHardware = false,
-                name = "SUBSTRATE"
-            };
             var keyring = new Keyring.Keyring();
-            keyring.Ss58Format = 2;
+            var kp = keyring.AddFromMnemonic(mnemonic, defaultMeta, NetApi.Model.Types.KeyType.Sr25519);
 
-            var kp = keyring.AddFromMnemonic("moral movie very draw assault whisper awful rebuild speed purity repeat card", meta, NetApi.Model.Types.KeyType.Sr25519);
-
-            Assert.That(kp.Address, Is.EqualTo("HSLu2eci2GCfWkRimjjdTXKoFSDL3rBv5Ey2JWCBj68cVZj"));
-        }
-
-        [TestCase("fun claim spawn flavor enable enrich advice canyon aisle aware energy level", "AccountTest4")]
-        public void CreateNewAccount_WithPassword_AndExportToJson(string mnemonic, string password)
-        {
-            //var seed = Mnemonic.MnemonicFromEntropy(new byte[16].Populate(), Mnemonic.BIP39Wordlist.English);
-
-            var keyring = new Keyring.Keyring();
-            var kp = keyring.AddFromMnemonic(mnemonic, new Meta()
-            {
-                genesisHash = "0x91b171bb158e2d3848fa23a9f1c25182fb8e20313b2c1eb49219da7a70ce90c3",
-                isHardware = false,
-                name = "SubstrateAccount2",
-                tags = null
-            }, NetApi.Model.Types.KeyType.Sr25519);
-
-            var walletResult = kp.ToWalletEncryption(password);
-            Assert.That(walletResult, Is.Not.Null);
-
-            var jsonResult = kp.ToJson(password);
-            Assert.That(jsonResult, Is.Not.Null);
+            Assert.That(kp.IsLocked, Is.False);
         }
 
         [Test]
         public void GenerateNewAccount_WithPassword_AndExportToJson()
         {
-            var mnemonic = Mnemonic.MnemonicFromEntropy(new byte[16].Populate(), Mnemonic.BIP39Wordlist.English);
-
             var keyring = new Keyring.Keyring();
-            var kp = keyring.AddFromMnemonic(mnemonic, new Meta()
+            var kp = keyring.AddFromMnemonic(GenerateMnemonic(MnemonicSize.Words12), new Meta()
             {
                 genesisHash = "0x91b171bb158e2d3848fa23a9f1c25182fb8e20313b2c1eb49219da7a70ce90c3",
                 isHardware = false,
@@ -129,6 +104,19 @@ namespace Substrate.NET.Wallet.Test
             var jsonResult = walletResult.ToJson();
 
             Assert.That(jsonResult, Is.Not.Null);
+        }
+
+        [Test]
+        public void GenerateNewAccount_Ed25519AndSr25519_ShouldHaveDifferentPublicAndSecretKey()
+        {
+            var mnemonic = GenerateMnemonic(MnemonicSize.Words12);
+            var keyring = new Keyring.Keyring();
+
+            var kp_Ed25519 = keyring.AddFromMnemonic(mnemonic, defaultMeta, NetApi.Model.Types.KeyType.Ed25519);
+            var kp_Sr25519 = keyring.AddFromMnemonic(mnemonic, defaultMeta, NetApi.Model.Types.KeyType.Sr25519);
+
+            Assert.That(kp_Ed25519.PairInformation.PublicKey, Is.Not.EquivalentTo(kp_Sr25519.PairInformation.PublicKey));
+            Assert.That(kp_Ed25519.PairInformation.SecretKey, Is.Not.EquivalentTo(kp_Sr25519.PairInformation.SecretKey));
         }
     }
 }

@@ -19,12 +19,9 @@ namespace Substrate.NET.Wallet.Keyring
             }
             else
             {
-                // TODO : check
                 byte[] privateKey;
                 byte[] publicKey;
                 Chaos.NaCl.Ed25519.KeyPairFromSeed(out publicKey, out privateKey, encoded);
-
-                //var miniSecret = new MiniSecret(encoded, ExpandMode.Ed25519);
 
                 res = new PairInfo(publicKey, privateKey);
             }

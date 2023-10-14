@@ -51,6 +51,9 @@ namespace Substrate.NET.Wallet.Keyring
             if (Meta.whenCreated == default)
                 Meta.whenCreated = DateTime.Now.Ticks;
 
+            if (IsLocked) 
+                Unlock(password);
+
             Encoded = Recode(password);
             return Pair.ToJsonPair(KeyType, Address, Meta, Encoded, !string.IsNullOrEmpty(password));
         }
@@ -62,10 +65,6 @@ namespace Substrate.NET.Wallet.Keyring
 
         public KeyringPair Derive(string sUri, Meta meta)
         {
-            if (IsLocked)
-                throw new InvalidOperationException("Cannot derive on locked KeyPair");
-
-            // TODO
             throw new NotImplementedException();
         }
 
@@ -86,6 +85,9 @@ namespace Substrate.NET.Wallet.Keyring
         {
             return GetAccount().Sign(message.ToBytes());
         }
+
+        public bool Verify(byte[] signature, byte[] publicKey, string message)
+            => Verify(signature, publicKey, message.ToBytes());
 
         public bool Verify(byte[] signature, byte[] publicKey, byte[] message)
         {

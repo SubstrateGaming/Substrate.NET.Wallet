@@ -20,9 +20,6 @@ namespace Substrate.NET.Wallet.Keyring
         public byte[] Seed { get; }
     }
 
-    /// <summary>
-    /// TODO : Use Schnorrkel.KeyPair ?
-    /// </summary>
     public class PairInfo
     {
         public PairInfo(byte[] publicKey, byte[] secretKey)
