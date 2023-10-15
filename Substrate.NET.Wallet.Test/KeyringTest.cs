@@ -12,7 +12,7 @@ namespace Substrate.NET.Wallet.Test
     {
         protected string readJsonFromFile(string jsonFile)
         {
-            return File.ReadAllText($"{AppContext.BaseDirectory}\\Data\\{jsonFile}");
+            return File.ReadAllText($"{AppContext.BaseDirectory}/Data/{jsonFile}");
         }
 
         private Meta defaultMeta = new Meta()
