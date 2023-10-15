@@ -12,10 +12,15 @@ namespace Substrate.NET.Wallet.Test.KeyringTests
 {
     internal class KeypairEd25519Tests
     {
-        public byte[] publicKeyOne = new byte[] { 47, 140, 97, 41, 216, 22, 207, 81, 195, 116, 188, 127, 8, 195, 230, 62, 209, 86, 207, 120, 174, 251, 74, 101, 80, 217, 123, 135, 153, 121, 119, 238 };
-        public byte[] publicKeyTwo = new byte[] { 215, 90, 152, 1, 130, 177, 10, 183, 213, 75, 254, 211, 201, 100, 7, 58, 14, 225, 114, 243, 218, 166, 35, 37, 175, 2, 26, 104, 247, 7, 81, 26 };
-        public byte[] seedOne = "12345678901234567890123456789012".ToBytes();
-        public byte[] seedTwo = Utils.HexToByteArray("0x9d61b19deffd5a60ba844af492ec2cc44449c5697b326919703bac031cae7f60");
+        public (byte[] publicKey, byte[] seed) FirstAccount = (
+            new byte[] { 47, 140, 97, 41, 216, 22, 207, 81, 195, 116, 188, 127, 8, 195, 230, 62, 209, 86, 207, 120, 174, 251, 74, 101, 80, 217, 123, 135, 153, 121, 119, 238 },
+            "12345678901234567890123456789012".ToBytes()
+        );
+
+        public (byte[] publicKey, byte[] seed) SecondAccount = (
+            new byte[] { 215, 90, 152, 1, 130, 177, 10, 183, 213, 75, 254, 211, 201, 100, 7, 58, 14, 225, 114, 243, 218, 166, 35, 37, 175, 2, 26, 104, 247, 7, 81, 26 },
+            Utils.HexToByteArray("0x9d61b19deffd5a60ba844af492ec2cc44449c5697b326919703bac031cae7f60")
+        );
 
         Substrate.NET.Wallet.Keyring.Keyring keyring { get; set; }
 
@@ -27,15 +32,15 @@ namespace Substrate.NET.Wallet.Test.KeyringTests
                 Ss58Format = 42
             };
 
-            keyring.AddFromSeed(seedOne, null, NetApi.Model.Types.KeyType.Ed25519);
+            keyring.AddFromSeed(FirstAccount.seed, null, NetApi.Model.Types.KeyType.Ed25519);
         }
 
         [Test]
         public void AddPairTwo()
         {
             Assert.That(
-                keyring.AddFromSeed(seedTwo, null, NetApi.Model.Types.KeyType.Ed25519).PairInformation.PublicKey,
-                Is.EqualTo(publicKeyTwo));
+                keyring.AddFromSeed(SecondAccount.seed, null, NetApi.Model.Types.KeyType.Ed25519).PairInformation.PublicKey,
+                Is.EqualTo(SecondAccount.publicKey));
         }
 
         [Test]
@@ -66,6 +71,21 @@ namespace Substrate.NET.Wallet.Test.KeyringTests
             Assert.That(pair.Verify(signature, pair.PairInformation.PublicKey, message), Is.True);
             Assert.That(pair.Verify(signature, new byte[32].Populate(), message), Is.False);
             Assert.That(pair.Verify(signature, pair.PairInformation.PublicKey, new byte[32].Populate()), Is.False);
+        }
+
+        [Test]
+        public void GetAllPublicKeys()
+        {
+            keyring.AddFromSeed(SecondAccount.seed, null, NetApi.Model.Types.KeyType.Ed25519);
+
+            Assert.That(keyring.GetPublicKeys(), Is.EqualTo(new List<byte[]>() { FirstAccount.publicKey, SecondAccount.publicKey }));
+        }
+
+        [Test]
+        public void GetByPublicKey()
+        {
+            Assert.That(keyring.GetPair(FirstAccount.publicKey).PairInformation.PublicKey, Is.EqualTo(FirstAccount.publicKey));
+            Assert.That(keyring.GetPair(SecondAccount.publicKey), Is.Null);
         }
     }
 }

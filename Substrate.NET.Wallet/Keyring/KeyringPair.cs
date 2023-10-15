@@ -91,7 +91,14 @@ namespace Substrate.NET.Wallet.Keyring
 
         public bool Verify(byte[] signature, byte[] publicKey, byte[] message)
         {
-            return GetAccount().Verify(signature, publicKey, message);
+            try
+            {
+                return GetAccount().Verify(signature, publicKey, message);
+            } catch(Exception)
+            {
+                return false;
+            }
+            
         }
     }
 }

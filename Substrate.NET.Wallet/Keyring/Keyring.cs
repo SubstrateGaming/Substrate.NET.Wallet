@@ -23,6 +23,18 @@ namespace Substrate.NET.Wallet.Keyring
         public IList<KeyringPair> Pairs { get; private set; } = new List<KeyringPair>();
         public short Ss58Format { get; set; } = 0;
 
+        #region Get methods
+        public IList<byte[]> GetPublicKeys()
+        {
+            return Pairs.Select(x => x.PairInformation.PublicKey).ToList();
+        }
+
+        public KeyringPair GetPair(byte[] publicKey)
+        {
+            return Pairs.FirstOrDefault(x => x.PairInformation.PublicKey.SequenceEqual(publicKey));
+        }
+        #endregion
+
         #region Add methods
         public void AddPair(KeyringPair keyringPair)
         {
