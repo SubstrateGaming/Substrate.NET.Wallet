@@ -7,6 +7,8 @@ namespace Substrate.NET.Wallet.Extensions
 {
     public static class BytesExtension
     {
+        private static readonly RandomNumberGenerator RandomGenerator = RandomNumberGenerator.Create();
+
         /// <summary>
         /// Load a byte array with random bytes
         /// </summary>
@@ -14,26 +16,28 @@ namespace Substrate.NET.Wallet.Extensions
         /// <returns></returns>
         public static byte[] Populate(this byte[] data)
         {
-            var randomGenerator = RandomNumberGenerator.Create();
-            randomGenerator.GetBytes(data);
+            RandomGenerator.GetBytes(data);
             return data;
         }
 
         public static byte[] BytesFixLength(this byte[] value, int bitLength = -1, bool atStart = false)
         {
-            int byteLength = (int)Math.Ceiling((double)bitLength / 8);
+            int byteLength = (bitLength == -1) ? value.Length : (int)Math.Ceiling(bitLength / 8.0);
 
-            if (bitLength == -1 || value.Length == byteLength)
+            if (value.Length == byteLength)
+            {
                 return value;
-            else if (value.Length > byteLength)
+            }
+
+            if (value.Length > byteLength)
+            {
                 return value.Take(byteLength).ToArray();
+            }
 
             byte[] result = new byte[byteLength];
+            int copyIndex = atStart ? 0 : byteLength - value.Length;
 
-            if (atStart)
-                Array.Copy(value, 0, result, 0, value.Length);
-            else
-                Array.Copy(value, 0, result, byteLength - value.Length, value.Length);
+            Array.Copy(value, 0, result, copyIndex, value.Length);
 
             return result;
         }
