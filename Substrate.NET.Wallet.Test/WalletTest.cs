@@ -6,7 +6,7 @@ using System;
 using System.IO;
 using System.Text;
 
-namespace SubstrateNetWalletTest
+namespace Substrate.NET.Wallet.Test
 {
     public class WalletTest
     {

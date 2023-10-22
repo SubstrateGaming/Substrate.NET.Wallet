@@ -7,7 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Substrate.NET.Wallet.Test.KeyPair
+namespace Substrate.NET.Wallet.Test.Keyrings
 {
     internal class KeypairSr25519Tests
     {
@@ -51,7 +51,7 @@ namespace Substrate.NET.Wallet.Test.KeyPair
             Assert.That(kp.Address, Is.EqualTo("FSjXNRT2K1R5caeHLPD6WMrqYUpfGZB7ua8W89JFctZ1YqV"));
         }
 
-        [Test, Ignore("TODO")]
+        [Test]
         public void CreateWithIntegerDerivations()
         {
             var kp1 = keyring.CreateFromUri("//9007199254740991", null, NetApi.Model.Types.KeyType.Sr25519);

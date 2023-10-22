@@ -4,6 +4,7 @@ using Substrate.NetApi.Model.Types;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Text;
 
 namespace Substrate.NET.Wallet.Keyring
@@ -22,6 +23,11 @@ namespace Substrate.NET.Wallet.Keyring
 
     public class PairInfo
     {
+        public PairInfo(byte[] publicKey) : this(publicKey, null)
+        {
+
+        }
+
         public PairInfo(byte[] publicKey, byte[] secretKey)
         {
             PublicKey = publicKey;
@@ -49,6 +55,9 @@ namespace Substrate.NET.Wallet.Keyring
             WalletJson.EncryptedToString(WalletJson.EncryptedJsonEncoding.Scrypt),
             WalletJson.EncryptedToString(WalletJson.EncryptedJsonEncoding.Xsalsa20Poly1305),
         };
+
+        public static KeyringPair CreatePair(KeyringAddress setup, PairInfo pair)
+            => CreatePair(setup, pair, meta: null, encoded: null, encryptedEncoding: null, ss58Format: 42);
 
         /// <summary>
         /// https://github.com/polkadot-js/common/blob/master/packages/keyring/src/pair/index.ts#L89

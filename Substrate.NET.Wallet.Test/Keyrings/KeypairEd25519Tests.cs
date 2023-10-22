@@ -8,7 +8,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Substrate.NET.Wallet.Test.KeyringTests
+namespace Substrate.NET.Wallet.Test.Keyrings
 {
     internal class KeypairEd25519Tests
     {

@@ -1,12 +1,18 @@
 ﻿using Newtonsoft.Json;
 using Substrate.NET.Wallet.Extensions;
+using Substrate.NetApi;
 using Substrate.NetApi.Model.Types;
 using System;
 using System.Collections.Generic;
+using System.Dynamic;
 using System.Text;
 
 namespace Substrate.NET.Wallet.Keyring
 {
+    /// <summary>
+    /// A Keyring pair is an account
+    /// It can be created from a mnemonic phrase, a json file, a seed, or a uri
+    /// </summary>
     public class KeyringPair
     {
         public KeyringPair(string address, byte[] addressRaw, byte[] encoded, Meta meta, PairInfo pair, KeyType keyType, List<WalletJson.EncryptedJsonEncoding> encryptedEncoding)
@@ -40,6 +46,11 @@ namespace Substrate.NET.Wallet.Keyring
             PairInformation = Pkcs8.Decode(password, !Pair.IsLocked(userEncoded) ? userEncoded : Encoded, EncryptedEncoding);
         }
 
+        public byte[] EncodePkcs8(string password)
+        {
+            return Pkcs8.Encode(password, null, EncryptedEncoding);
+        }
+
         public byte[] Recode(string password)
         {
             //return Pkcs8.Encode(password, Encoded, EncryptedEncoding);
@@ -63,9 +74,16 @@ namespace Substrate.NET.Wallet.Keyring
             return JsonConvert.SerializeObject(ToWalletEncryption(password));
         }
 
+        public KeyringPair Derive(string sUri) => Derive(sUri, null);
         public KeyringPair Derive(string sUri, Meta meta)
         {
-            throw new NotImplementedException();
+            if (IsLocked)
+                throw new InvalidCastException("Cannot derive on a locked KeyPair");
+
+            var path = Uri.KeyExtractPath(sUri);
+            var derived = Uri.KeyFromPath(PairInformation, path.path, KeyType);
+
+            return Pair.CreatePair(KeyringAddress.Standard(KeyType), derived, Meta, null, EncryptedEncoding, Keyring.DEFAULT_SS58);
         }
 
         /// <summary>
@@ -85,6 +103,9 @@ namespace Substrate.NET.Wallet.Keyring
         {
             return GetAccount().Sign(message.ToBytes());
         }
+
+        public bool Verify(byte[] signature, string message)
+            => Verify(signature, PairInformation.PublicKey, message);
 
         public bool Verify(byte[] signature, byte[] publicKey, string message)
             => Verify(signature, publicKey, message.ToBytes());

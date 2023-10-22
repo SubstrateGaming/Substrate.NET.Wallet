@@ -118,5 +118,68 @@ namespace Substrate.NET.Wallet.Test
             Assert.That(kp_Ed25519.PairInformation.PublicKey, Is.Not.EquivalentTo(kp_Sr25519.PairInformation.PublicKey));
             Assert.That(kp_Ed25519.PairInformation.SecretKey, Is.Not.EquivalentTo(kp_Sr25519.PairInformation.SecretKey));
         }
+
+        [Test]
+        public void DecodeAddress()
+        {
+            var keyring = new Substrate.NET.Wallet.Keyring.Keyring();
+            var publicKey = new byte[] { 16, 178, 46, 190, 137, 179, 33, 55, 11, 238, 141, 57, 213, 197, 212, 17, 218, 241, 232, 252, 145, 201, 209, 83, 64, 68, 89, 15, 31, 150, 110, 188 };
+
+            Assert.That(keyring.DecodeAddress("5CSbZ7wG456oty4WoiX6a1J88VUbrCXLhrKVJ9q95BsYH4TZ"), Is.EqualTo(publicKey));
+            Assert.That(keyring.DecodeAddress("CxDDSH8gS7jecsxaRL9Txf8H5kqesLXAEAEgp76Yz632J9M"), Is.EqualTo(publicKey));
+            Assert.That(keyring.DecodeAddress("1NthTCKurNHLW52mMa6iA8Gz7UFYW5UnM3yTSpVdGu4Th7h"), Is.EqualTo(publicKey));
+        }
+
+        [Test]
+        public void EncodeAddress()
+        {
+            var keyring = new Substrate.NET.Wallet.Keyring.Keyring();
+            var publicKey = new byte[] { 16, 178, 46, 190, 137, 179, 33, 55, 11, 238, 141, 57, 213, 197, 212, 17, 218, 241, 232, 252, 145, 201, 209, 83, 64, 68, 89, 15, 31, 150, 110, 188 };
+
+            keyring.Ss58Format = 42;
+            Assert.That(keyring.EncodeAddress(publicKey), Is.EqualTo("5CSbZ7wG456oty4WoiX6a1J88VUbrCXLhrKVJ9q95BsYH4TZ"));
+
+            keyring.Ss58Format = 2;
+            Assert.That(keyring.EncodeAddress(publicKey), Is.EqualTo("CxDDSH8gS7jecsxaRL9Txf8H5kqesLXAEAEgp76Yz632J9M"));
+
+            keyring.Ss58Format = 0;
+            Assert.That(keyring.EncodeAddress(publicKey), Is.EqualTo("1NthTCKurNHLW52mMa6iA8Gz7UFYW5UnM3yTSpVdGu4Th7h"));
+        }
+
+        [Test]
+        public void Example()
+        {
+            // Create a new Keyring, by default ss58 format is 42 (Substrate standard address)
+            var keyring = new Substrate.NET.Wallet.Keyring.Keyring();
+
+            // You can specify ss58 address if needed (check SS58 regitry here : https://github.com/paritytech/ss58-registry/blob/main/ss58-registry.json)
+            keyring.Ss58Format = 0; // Polkadot
+
+            // Generate a new mnemonic for a new account
+            var newMnemonic = GenerateMnemonic(MnemonicSize.Words12);
+
+            // Use an existing mnemonic
+            var existingMnemonicAccount = "entire material egg meadow latin bargain dutch coral blood melt acoustic thought";
+
+            // Import an account from mnemonic automatically unlock all feature
+            var firstPair = keyring.AddFromMnemonic(existingMnemonicAccount, new Meta() { name = "My account name"}, NetApi.Model.Types.KeyType.Ed25519);
+            // firstPair.IsLocked => false
+
+            // You can export you account to a Json file
+            var json = firstPair.ToJson("myPassword");
+
+            // Import an account from a json file
+            var secondPair = keyring.AddFromJson(json);
+            // You need to unlock the account with the associated password
+            secondPair.Unlock("myPassword");
+
+            // Get an account instance from this Key pair
+            var account = firstPair.GetAccount();
+
+            // Sign a message
+            string message = "Hello !";
+            var signature = firstPair.Sign(message);
+            var isVerify = firstPair.Verify(signature, message);
+        }
     }
 }

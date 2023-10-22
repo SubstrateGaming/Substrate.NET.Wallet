@@ -13,15 +13,33 @@ namespace Substrate.NET.Wallet.Keyring
     {
         public KeyType KeyType { get; set; }
         public Func<byte[], short, string> ToSS58 { get; set; }
+
+        public static KeyringAddress Standard(KeyType keyType) 
+            => new KeyringAddress() { KeyType = keyType, ToSS58 = Utils.GetAddressFrom };
     }
 
+    /// <summary>
+    /// Keyring is a cryptographic key management tool or library used to manage cryptographic keys and perform key-related operations, such as key generation, storage, and signing.
+    /// </summary>
     public class Keyring
     {
         public const int NONCE_LENGTH = 24;
         public const int SCRYPT_LENGTH = 32 + 3 * 4;
+        public const short DEFAULT_SS58 = 42;
 
         public IList<KeyringPair> Pairs { get; private set; } = new List<KeyringPair>();
-        public short Ss58Format { get; set; } = 0;
+        public short Ss58Format { get; set; } = DEFAULT_SS58;
+
+        public byte[] DecodeAddress(string address)
+        {
+            short network;
+            return Utils.GetPublicKeyFrom(address, out network);
+        }
+
+        public string EncodeAddress(byte[] publicKey)
+        {
+            return Utils.GetAddressFrom(publicKey, Ss58Format);
+        }
 
         #region Get methods
         public IList<byte[]> GetPublicKeys()
@@ -41,12 +59,12 @@ namespace Substrate.NET.Wallet.Keyring
             Pairs.Add(keyringPair);
         }
 
-        public KeyringPair AddFromAddress(string address, Meta meta, byte[] encoded, KeyType keyType, bool ignoreChecksum, List<WalletJson.EncryptedJsonEncoding> encryptedEncoding)
+        public KeyringPair AddFromAddress(string address, Meta meta, byte[] encoded, KeyType keyType, List<WalletJson.EncryptedJsonEncoding> encryptedEncoding)
         {
             var publicKey = Utils.GetPublicKeyFrom(address);
 
             var keyringPair = Pair.CreatePair(
-                new KeyringAddress() { KeyType = keyType, ToSS58 = Utils.GetAddressFrom },
+                KeyringAddress.Standard(keyType),
                 new PairInfo(publicKey, new byte[32]),
                 meta, encoded, encryptedEncoding, Ss58Format);
 
@@ -84,7 +102,7 @@ namespace Substrate.NET.Wallet.Keyring
 
         public KeyringPair AddFromSeed(byte[] seed, Meta meta, KeyType keyType)
         {
-            var pair = Pair.CreatePair(new KeyringAddress() { KeyType = keyType, ToSS58 = Utils.GetAddressFrom }, KeyPairFromSeed(keyType, seed), meta, null, null, Ss58Format);
+            var pair = Pair.CreatePair(KeyringAddress.Standard(keyType), KeyPairFromSeed(keyType, seed), meta, null, null, Ss58Format);
             AddPair(pair);
 
             return pair;
@@ -119,7 +137,7 @@ namespace Substrate.NET.Wallet.Keyring
                 Convert.FromBase64String(walletEncryption.encoded);
 
             return Pair.CreatePair(
-                new KeyringAddress() { KeyType = keyType, ToSS58 = Utils.GetAddressFrom },
+                KeyringAddress.Standard(keyType),
                 new PairInfo(publicKey, null),
                 walletEncryption.meta, encoded, encryptedEncoding, Ss58Format);
         }
@@ -139,11 +157,17 @@ namespace Substrate.NET.Wallet.Keyring
                 seed = Utils.HexToByteArray(extract.Phrase);
             } else
             {
-                int phraseLength = Mnemonic.ToMnemonicArray(extract.Phrase).Length;
+                int phraseLength = extract.Phrase.Split(' ').Length;
+
                 // Mnemonic size should be equal to 12, 15, 18, 21 or 24 words
                 if (new byte[5] { 12, 15, 18, 21, 24 }.Any(l => l == phraseLength))
                 {
-                    seed = Mnemonic.MnemonicToMiniSecret(extract.Phrase, extract.Password);
+                    if (!Mnemonic.ValidateMnemonic(mnemonic, bIP39Wordlist))
+                    {
+                        throw new InvalidOperationException("Invalid bip39 mnemonic specified");
+                    }
+
+                    seed = Mnemonic.GetSecretKeyFromMnemonic(mnemonic, password, bIP39Wordlist);
                 } else
                 {
                     if(phraseLength > 32)
@@ -153,9 +177,9 @@ namespace Substrate.NET.Wallet.Keyring
                 }
             }
 
-            var derivedPair = Mnemonic.KeyFromPath(KeyPairFromSeed(keyType, seed), extract.Path, keyType);
+            var derivedPair = Uri.KeyFromPath(KeyPairFromSeed(keyType, seed), extract.Path, keyType);
 
-            return Pair.CreatePair(new KeyringAddress() { KeyType = keyType, ToSS58 = Utils.GetAddressFrom }, derivedPair, meta, null, null, Ss58Format);
+            return Pair.CreatePair(KeyringAddress.Standard(keyType), derivedPair, meta, null, null, Ss58Format);
         }
         #endregion
 

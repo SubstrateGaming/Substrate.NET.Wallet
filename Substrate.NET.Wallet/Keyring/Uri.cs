@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Schnorrkel.Keys;
+using Substrate.NetApi.Model.Types;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -10,13 +12,14 @@ namespace Substrate.NET.Wallet.Keyring
     {
         public string DerivePath { get; set; }
         public string Password { get; set; }
-        public IEnumerable<DeriveJunction> Path { get; set; }
+        public List<DeriveJunction> Path { get; set; }
         public string Phrase { get; set; }
     }
 
     public class DeriveJunction
     {
-        public byte[] ChainCode { get; set; }
+        public bool IsHard { get; }
+        public byte[] ChainCode { get; }
 
         public static DeriveJunction From(string p)
         {
@@ -31,6 +34,12 @@ namespace Substrate.NET.Wallet.Keyring
 
         public const string CaptureUriPattern = "^(\\w+( \\w+)*)((\\/\\/?[^\\/]+)*)(\\/\\/\\/(.*))?$";
         public const string CaptureJunctionPattern = "\\/(\\/?)([^/]+)";
+
+        public static string GetUri(string mnemonic, string derivePath)
+        {
+            // We don't handle (yet...)  KeyType ed25519-ledger and Ethereum
+            return $"{mnemonic}{derivePath}";
+        }
 
         public static KeyExtractResult KeyExtractUri(string suri)
         {
@@ -54,28 +63,35 @@ namespace Substrate.NET.Wallet.Keyring
             };
         }
 
-        public static (string[] parts, DeriveJunction[] path) KeyExtractPath(string derivePath)
+        public static (string[] parts, IList<DeriveJunction> path) KeyExtractPath(string derivePath)
         {
-            _ = Regex.Match(derivePath, CaptureJunctionPattern, RegexOptions.None, TimeSpan.FromMilliseconds(100));
+            var parts = Regex.Match(derivePath, CaptureJunctionPattern, RegexOptions.None, TimeSpan.FromMilliseconds(100));
             var paths = new List<DeriveJunction>();
 
             string constructed = string.Empty;
 
-            //if (parts.Success)
-            //{
-            //    foreach (var p in parts.Groups)
-            //    {
-            //        paths.Add(DeriveJunction.From(p))
-            //    }
-            //}
-            //throw new NotImplementedException();
+            if (parts.Success)
+            {
+                constructed = parts.Value;
+                foreach (var p in parts.Groups)
+                {
+                    //paths.Add(DeriveJunction.From(p));
+                }
+            }
+            throw new NotImplementedException();
 
-            if(constructed != derivePath)
+            if (constructed != derivePath)
             {
                 throw new InvalidOperationException($"Re-constructed path ${constructed} does not match input");
             }
 
             return (new string[] {}, paths.ToArray());
+        }
+
+        public static PairInfo KeyFromPath(PairInfo pair, IList<DeriveJunction> path, KeyType keyType)
+        {
+            // TODO : handle DeriveJunction
+            return pair;
         }
     }
 }
