@@ -1,5 +1,6 @@
 ﻿using Chaos.NaCl;
 using Substrate.NET.Wallet.Extensions;
+using Substrate.NetApi.Extensions;
 using Substrate.NetApi.Model.Types;
 using System;
 using System.Collections.Generic;
@@ -81,9 +82,9 @@ namespace Substrate.NET.Wallet.Keyring
                 encryptedEncoding);
         }
 
-        public static PairInfo DecodePair(string password, byte[] encrypted, List<WalletJson.EncryptedJsonEncoding> encryptionType)
+        public static PairInfo DecodePair(string password, byte[] encoded, List<WalletJson.EncryptedJsonEncoding> encryptionType)
         {
-            var decrypted = Keyring.JsonDecryptData(password, encrypted, encryptionType);
+            var decrypted = Keyring.JsonDecryptData(password, encoded, encryptionType);
             var header = decrypted.SubArray(0, PKCS8_HEADER.Length);
 
             if (!header.SequenceEqual(PKCS8_HEADER))

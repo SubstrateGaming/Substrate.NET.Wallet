@@ -2,6 +2,7 @@
 using Substrate.NET.Wallet.Extensions;
 using Substrate.NET.Wallet.Keyring;
 using Substrate.NetApi;
+using Substrate.NetApi.Extensions;
 using System;
 using System.Collections.Generic;
 using System.Linq;

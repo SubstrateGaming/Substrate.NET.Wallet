@@ -1,10 +1,9 @@
 ﻿using NUnit.Framework;
-using Substrate.NetApi;
 using System;
 using System.IO;
-using Substrate.NET.Wallet.Extensions;
 using Substrate.NET.Wallet.Keyring;
-using static Substrate.NET.Wallet.Keyring.Mnemonic;
+using Substrate.NetApi;
+using static Substrate.NetApi.Mnemonic;
 
 namespace Substrate.NET.Wallet.Test
 {
@@ -92,7 +91,7 @@ namespace Substrate.NET.Wallet.Test
         public void GenerateNewAccount_WithPassword_AndExportToJson()
         {
             var keyring = new Keyring.Keyring();
-            var kp = keyring.AddFromMnemonic(GenerateMnemonic(MnemonicSize.Words12), new Meta()
+            var kp = keyring.AddFromMnemonic(Mnemonic.GenerateMnemonic(Mnemonic.MnemonicSize.Words12), new Meta()
             {
                 genesisHash = "0x91b171bb158e2d3848fa23a9f1c25182fb8e20313b2c1eb49219da7a70ce90c3",
                 isHardware = false,
@@ -109,7 +108,7 @@ namespace Substrate.NET.Wallet.Test
         [Test]
         public void GenerateNewAccount_Ed25519AndSr25519_ShouldHaveDifferentPublicAndSecretKey()
         {
-            var mnemonic = GenerateMnemonic(MnemonicSize.Words12);
+            var mnemonic = Mnemonic.GenerateMnemonic(Mnemonic.MnemonicSize.Words12);
             var keyring = new Keyring.Keyring();
 
             var kp_Ed25519 = keyring.AddFromMnemonic(mnemonic, defaultMeta, NetApi.Model.Types.KeyType.Ed25519);
@@ -156,7 +155,7 @@ namespace Substrate.NET.Wallet.Test
             keyring.Ss58Format = 0; // Polkadot
 
             // Generate a new mnemonic for a new account
-            var newMnemonic = GenerateMnemonic(MnemonicSize.Words12);
+            var newMnemonic = Mnemonic.GenerateMnemonic(MnemonicSize.Words12);
 
             // Use an existing mnemonic
             var existingMnemonicAccount = "entire material egg meadow latin bargain dutch coral blood melt acoustic thought";

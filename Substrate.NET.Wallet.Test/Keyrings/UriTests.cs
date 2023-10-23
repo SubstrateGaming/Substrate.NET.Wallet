@@ -12,6 +12,13 @@ namespace Substrate.NET.Wallet.Test.Keyrings
         public static byte[] HelloWorldDotBytes = new byte[] { 12, 68, 79, 84, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 
         [Test]
+        public void CompactAddLenght_ShouldAddLengthPrefix()
+        {
+            var input = new byte[] { 12, 13 };
+
+        }
+
+        [Test]
         [TestCase("//2")]
         public void KeyExtractUri_FromInvalidUri_ShouldFail(string value)
         {
@@ -72,6 +79,7 @@ namespace Substrate.NET.Wallet.Test.Keyrings
             Assert.That(res.Path[1].ChainCode, Is.EqualTo(HelloWorldDotBytes));
         }
 
+        [Test]
         public void KeyExtractUri_DeriveMultiple_Dot_1()
         {
             var res = Uri.KeyExtractUri("hello world//DOT/1");
@@ -134,10 +142,10 @@ namespace Substrate.NET.Wallet.Test.Keyrings
         {
             var res = Uri.KeyExtractPath("/1");
 
-            Assert.That(res.parts, Is.EqualTo(new string[1] { "/1" }));
-            Assert.That(res.path.Length, Is.EqualTo(1));
-            Assert.That(res.path[0].IsHard, Is.EqualTo(false));
-            Assert.That(res.path[0].ChainCode, Is.EqualTo(new byte[] { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }));
+            Assert.That(res.Parts, Is.EqualTo(new string[1] { "/1" }));
+            Assert.That(res.Path.Count, Is.EqualTo(1));
+            Assert.That(res.Path[0].IsHard, Is.EqualTo(false));
+            Assert.That(res.Path[0].ChainCode, Is.EqualTo(new byte[] { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }));
         }
 
         [Test]
@@ -145,10 +153,10 @@ namespace Substrate.NET.Wallet.Test.Keyrings
         {
             var res = Uri.KeyExtractPath("//1");
 
-            Assert.That(res.parts, Is.EqualTo(new string[1] { "//1" }));
-            Assert.That(res.path.Length, Is.EqualTo(1));
-            Assert.That(res.path[0].IsHard, Is.EqualTo(true));
-            Assert.That(res.path[0].ChainCode, Is.EqualTo(new byte[] { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }));
+            Assert.That(res.Parts, Is.EqualTo(new string[1] { "//1" }));
+            Assert.That(res.Path.Count, Is.EqualTo(1));
+            Assert.That(res.Path[0].IsHard, Is.EqualTo(true));
+            Assert.That(res.Path[0].ChainCode, Is.EqualTo(new byte[] { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }));
         }
 
         [Test]
@@ -156,14 +164,14 @@ namespace Substrate.NET.Wallet.Test.Keyrings
         {
             var res = Uri.KeyExtractPath("//1/2");
 
-            Assert.That(res.parts, Is.EqualTo(new string[] { "//1", "/2" }));
-            Assert.That(res.path.Length, Is.EqualTo(2));
+            Assert.That(res.Parts, Is.EqualTo(new string[] { "//1", "/2" }));
+            Assert.That(res.Path.Count, Is.EqualTo(2));
 
-            Assert.That(res.path[0].IsHard, Is.EqualTo(true));
-            Assert.That(res.path[0].ChainCode, Is.EqualTo(new byte[] { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }));
+            Assert.That(res.Path[0].IsHard, Is.EqualTo(true));
+            Assert.That(res.Path[0].ChainCode, Is.EqualTo(new byte[] { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }));
 
-            Assert.That(res.path[0].IsHard, Is.EqualTo(false));
-            Assert.That(res.path[0].ChainCode, Is.EqualTo(new byte[] { 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }));
+            Assert.That(res.Path[1].IsHard, Is.EqualTo(false));
+            Assert.That(res.Path[1].ChainCode, Is.EqualTo(new byte[] { 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }));
         }
 
         [Test]

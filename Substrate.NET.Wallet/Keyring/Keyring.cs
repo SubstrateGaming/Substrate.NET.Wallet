@@ -2,6 +2,7 @@
 using Schnorrkel.Keys;
 using Substrate.NET.Wallet.Extensions;
 using Substrate.NetApi;
+using Substrate.NetApi.Extensions;
 using Substrate.NetApi.Model.Types;
 using System;
 using System.Collections.Generic;
@@ -162,12 +163,12 @@ namespace Substrate.NET.Wallet.Keyring
                 // Mnemonic size should be equal to 12, 15, 18, 21 or 24 words
                 if (new byte[5] { 12, 15, 18, 21, 24 }.Any(l => l == phraseLength))
                 {
-                    if (!Mnemonic.ValidateMnemonic(mnemonic, bIP39Wordlist))
+                    if (!Mnemonic.ValidateMnemonic(extract.Phrase, Mnemonic.BIP39Wordlist.English))
                     {
                         throw new InvalidOperationException("Invalid bip39 mnemonic specified");
                     }
 
-                    seed = Mnemonic.GetSecretKeyFromMnemonic(mnemonic, password, bIP39Wordlist);
+                    seed = Mnemonic.GetSecretKeyFromMnemonic(extract.Phrase, extract.Password, Mnemonic.BIP39Wordlist.English);
                 } else
                 {
                     if(phraseLength > 32)
@@ -225,6 +226,7 @@ namespace Substrate.NET.Wallet.Keyring
 
                 case KeyType.Sr25519:
                     var miniSecret = new MiniSecret(seed, ExpandMode.Ed25519);
+                    var x = Account.Build(KeyType.Sr25519, miniSecret.ExpandToSecret().ToBytes(), miniSecret.GetPair().Public.Key);
                     return new PairInfo(miniSecret.GetPair().Public.Key, miniSecret.ExpandToSecret().ToBytes());
 
                 default:

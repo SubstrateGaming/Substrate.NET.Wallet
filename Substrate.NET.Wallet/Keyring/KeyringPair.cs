@@ -1,6 +1,7 @@
 ﻿using Newtonsoft.Json;
 using Substrate.NET.Wallet.Extensions;
 using Substrate.NetApi;
+using Substrate.NetApi.Extensions;
 using Substrate.NetApi.Model.Types;
 using System;
 using System.Collections.Generic;
@@ -81,7 +82,7 @@ namespace Substrate.NET.Wallet.Keyring
                 throw new InvalidCastException("Cannot derive on a locked KeyPair");
 
             var path = Uri.KeyExtractPath(sUri);
-            var derived = Uri.KeyFromPath(PairInformation, path.path, KeyType);
+            var derived = Uri.KeyFromPath(PairInformation, path.Path, KeyType);
 
             return Pair.CreatePair(KeyringAddress.Standard(KeyType), derived, Meta, null, EncryptedEncoding, Keyring.DEFAULT_SS58);
         }

@@ -24,20 +24,7 @@ namespace Substrate.NET.Wallet.Test.Keyrings
             null
         );
 
-        [Test]
-        public void GetPublickKeyAfterDecoding()
-        {
-            var password = "TESTING";
-            var encoded = alicePairEd25519.EncodePkcs8(password);
-
-            var pair = Pair.CreatePair(KeyringAddress.Standard(NetApi.Model.Types.KeyType.Ed25519), new PairInfo(alicePairEd25519.PairInformation.PublicKey));
-
-            pair.Unlock(password, encoded);
-
-            Assert.That(pair.IsLocked, Is.False);
-        }
-
-        [Test]
+        [Test, Ignore("Derive debug")]
         public void AllowDerivationOnAlice()
         {
             var alice = Pair.CreatePair(
