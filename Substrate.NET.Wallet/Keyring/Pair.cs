@@ -57,7 +57,7 @@ namespace Substrate.NET.Wallet.Keyring
             WalletJson.EncryptedToString(WalletJson.EncryptedJsonEncoding.Xsalsa20Poly1305),
         };
 
-        public static KeyringPair CreatePair(KeyringAddress setup, PairInfo pair)
+        public static Wallet CreatePair(KeyringAddress setup, PairInfo pair)
             => CreatePair(setup, pair, meta: null, encoded: null, encryptedEncoding: null, ss58Format: 42);
 
         /// <summary>
@@ -70,16 +70,9 @@ namespace Substrate.NET.Wallet.Keyring
         /// <param name="decoded"></param>
         /// <param name="encryptedEncoding"></param>
         /// <returns></returns>
-        public static KeyringPair CreatePair(KeyringAddress setup, PairInfo pair, Meta meta, byte[] encoded, List<WalletJson.EncryptedJsonEncoding> encryptedEncoding, short ss58Format)
+        public static Wallet CreatePair(KeyringAddress setup, PairInfo pair, Meta meta, byte[] encoded, List<WalletJson.EncryptedJsonEncoding> encryptedEncoding, short ss58Format)
         {
-            return new KeyringPair(
-                setup.ToSS58(pair.PublicKey, ss58Format),
-                pair.PublicKey,
-                encoded,
-                meta,
-                pair,
-                setup.KeyType,
-                encryptedEncoding);
+            return new Wallet(setup.ToSS58(pair.PublicKey, ss58Format), encoded, meta, pair.PublicKey, pair.SecretKey, setup.KeyType, encryptedEncoding);
         }
 
         public static PairInfo DecodePair(string password, byte[] encoded, List<WalletJson.EncryptedJsonEncoding> encryptionType)
@@ -127,9 +120,9 @@ namespace Substrate.NET.Wallet.Keyring
                 .ToArray();
         }
 
-        public static WalletEncryption ToJsonPair(KeyType keyType, string address, Meta meta, byte[] encoded, bool isEncrypted)
+        public static WalletFile ToJsonPair(KeyType keyType, string address, Meta meta, byte[] encoded, bool isEncrypted)
         {
-            return new WalletEncryption()
+            return new WalletFile()
             {
                 address = address,
                 encoded = Convert.ToBase64String(encoded),

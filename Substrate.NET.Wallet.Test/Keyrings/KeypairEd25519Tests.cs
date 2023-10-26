@@ -1,8 +1,10 @@
-﻿using NUnit.Framework;
+﻿using Chaos.NaCl;
+using NUnit.Framework;
 using Substrate.NET.Wallet.Extensions;
 using Substrate.NET.Wallet.Keyring;
 using Substrate.NetApi;
 using Substrate.NetApi.Extensions;
+using Substrate.NetApi.Model.Types;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -40,7 +42,7 @@ namespace Substrate.NET.Wallet.Test.Keyrings
         public void AddPairTwo()
         {
             Assert.That(
-                keyring.AddFromSeed(SecondAccount.seed, null, NetApi.Model.Types.KeyType.Ed25519).PairInformation.PublicKey,
+                keyring.AddFromSeed(SecondAccount.seed, null, NetApi.Model.Types.KeyType.Ed25519).Account.Bytes,
                 Is.EqualTo(SecondAccount.publicKey));
         }
 
@@ -66,12 +68,13 @@ namespace Substrate.NET.Wallet.Test.Keyrings
         public void Ed25519_SignsAndVerifies()
         {
             string message = "this is a message";
-            var pair = keyring.Pairs.First();
-            var signature = pair.Sign(message);
+            var wallet = keyring.Wallets.First();
 
-            Assert.That(pair.Verify(signature, pair.PairInformation.PublicKey, message), Is.True);
-            Assert.That(pair.Verify(signature, new byte[32].Populate(), message), Is.False);
-            Assert.That(pair.Verify(signature, pair.PairInformation.PublicKey, new byte[32].Populate()), Is.False);
+            var signature = wallet.Sign(message);
+
+            Assert.That(wallet.Verify(signature, message, true), Is.True);
+            Assert.That(wallet.Verify(signature, message, false), Is.False);
+            Assert.That(wallet.Verify(signature, new byte[32].Populate()), Is.False);
         }
 
         [Test]
@@ -85,8 +88,8 @@ namespace Substrate.NET.Wallet.Test.Keyrings
         [Test]
         public void GetByPublicKey()
         {
-            Assert.That(keyring.GetPair(FirstAccount.publicKey).PairInformation.PublicKey, Is.EqualTo(FirstAccount.publicKey));
-            Assert.That(keyring.GetPair(SecondAccount.publicKey), Is.Null);
+            Assert.That(keyring.GetWallet(FirstAccount.publicKey).Account.Bytes, Is.EqualTo(FirstAccount.publicKey));
+            Assert.That(keyring.GetWallet(SecondAccount.publicKey), Is.Null);
         }
     }
 }

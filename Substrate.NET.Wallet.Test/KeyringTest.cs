@@ -4,6 +4,7 @@ using System.IO;
 using Substrate.NET.Wallet.Keyring;
 using Substrate.NetApi;
 using static Substrate.NetApi.Mnemonic;
+using System.Linq;
 
 namespace Substrate.NET.Wallet.Test
 {
@@ -66,16 +67,16 @@ namespace Substrate.NET.Wallet.Test
             var keyring = new Keyring.Keyring();
             var keyringPair1 = keyring.AddFromJson(input);
 
-            var walletEncryptionSamePassword = keyringPair1.ToWalletEncryption(password);
+            var walletEncryptionSamePassword = keyringPair1.ToWalletFile(password);
             var keyringPair2 = keyring.AddFromJson(walletEncryptionSamePassword);
 
-            Assert.That(keyringPair1.PairInformation.PublicKey, Is.EqualTo(keyringPair2.PairInformation.PublicKey));
+            Assert.That(keyringPair1.Account.Bytes, Is.EqualTo(keyringPair2.Account.Bytes));
 
             Assert.That(keyringPair1.IsLocked, Is.False);
             Assert.That(keyringPair2.IsLocked, Is.True);
 
             keyringPair2.Unlock(password);
-            Assert.That(keyringPair1.PairInformation.SecretKey, Is.EqualTo(keyringPair2.PairInformation.SecretKey));
+            Assert.That(keyringPair1.Account.PrivateKey, Is.EqualTo(keyringPair2.Account.PrivateKey));
         }
 
         [TestCase("fun claim spawn flavor enable enrich advice canyon aisle aware energy level")]
@@ -99,7 +100,7 @@ namespace Substrate.NET.Wallet.Test
                 tags = null
             }, NetApi.Model.Types.KeyType.Sr25519);
 
-            var walletResult = kp.ToWalletEncryption("testPassword");
+            var walletResult = kp.ToWalletFile("testPassword");
             var jsonResult = walletResult.ToJson();
 
             Assert.That(jsonResult, Is.Not.Null);
@@ -114,8 +115,8 @@ namespace Substrate.NET.Wallet.Test
             var kp_Ed25519 = keyring.AddFromMnemonic(mnemonic, defaultMeta, NetApi.Model.Types.KeyType.Ed25519);
             var kp_Sr25519 = keyring.AddFromMnemonic(mnemonic, defaultMeta, NetApi.Model.Types.KeyType.Sr25519);
 
-            Assert.That(kp_Ed25519.PairInformation.PublicKey, Is.Not.EquivalentTo(kp_Sr25519.PairInformation.PublicKey));
-            Assert.That(kp_Ed25519.PairInformation.SecretKey, Is.Not.EquivalentTo(kp_Sr25519.PairInformation.SecretKey));
+            Assert.That(kp_Ed25519.Account.Bytes, Is.Not.EquivalentTo(kp_Sr25519.Account.Bytes));
+            Assert.That(kp_Ed25519.Account.PrivateKey, Is.Not.EquivalentTo(kp_Sr25519.Account.PrivateKey));
         }
 
         [Test]
@@ -146,7 +147,7 @@ namespace Substrate.NET.Wallet.Test
         }
 
         [Test]
-        public void Example()
+        public void WikiExample_Test()
         {
             // Create a new Keyring, by default ss58 format is 42 (Substrate standard address)
             var keyring = new Substrate.NET.Wallet.Keyring.Keyring();
@@ -156,29 +157,32 @@ namespace Substrate.NET.Wallet.Test
 
             // Generate a new mnemonic for a new account
             var newMnemonic = Mnemonic.GenerateMnemonic(MnemonicSize.Words12);
+            Assert.That(newMnemonic.Count(), Is.EqualTo(12));
 
             // Use an existing mnemonic
             var existingMnemonicAccount = "entire material egg meadow latin bargain dutch coral blood melt acoustic thought";
 
             // Import an account from mnemonic automatically unlock all feature
-            var firstPair = keyring.AddFromMnemonic(existingMnemonicAccount, new Meta() { name = "My account name"}, NetApi.Model.Types.KeyType.Ed25519);
+            var firstWallet = keyring.AddFromMnemonic(existingMnemonicAccount, new Meta() { name = "My account name"}, NetApi.Model.Types.KeyType.Ed25519);
             // firstPair.IsLocked => false
+            Assert.That(firstWallet.IsLocked, Is.False);
+            Assert.That(firstWallet.IsStored, Is.False);
 
             // You can export you account to a Json file
-            var json = firstPair.ToJson("myPassword");
+            var json = firstWallet.ToJson("myPassword");
 
             // Import an account from a json file
-            var secondPair = keyring.AddFromJson(json);
+            var secondWallet = keyring.AddFromJson(json);
+            Assert.That(secondWallet.IsLocked, Is.True);
             // You need to unlock the account with the associated password
-            secondPair.Unlock("myPassword");
-
-            // Get an account instance from this Key pair
-            var account = firstPair.GetAccount();
+            secondWallet.Unlock("myPassword");
+            Assert.That(secondWallet.IsLocked, Is.False);
 
             // Sign a message
             string message = "Hello !";
-            var signature = firstPair.Sign(message);
-            var isVerify = firstPair.Verify(signature, message);
+            var signature = firstWallet.Sign(message);
+            var isVerify = firstWallet.Verify(signature, message);
+            Assert.That(isVerify, Is.True);
         }
     }
 }

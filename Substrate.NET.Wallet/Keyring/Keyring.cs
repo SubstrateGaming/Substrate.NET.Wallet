@@ -15,8 +15,16 @@ namespace Substrate.NET.Wallet.Keyring
         public KeyType KeyType { get; set; }
         public Func<byte[], short, string> ToSS58 { get; set; }
 
-        public static KeyringAddress Standard(KeyType keyType) 
-            => new KeyringAddress() { KeyType = keyType, ToSS58 = Utils.GetAddressFrom };
+        public KeyringAddress(KeyType keyType) {
+            KeyType = keyType;
+            ToSS58 = Utils.GetAddressFrom;
+        }
+
+        public KeyringAddress(KeyType keyType, Func<byte[], short, string> toSS58)
+        {
+            KeyType = keyType;
+            ToSS58 = toSS58;
+        }
     }
 
     /// <summary>
@@ -28,7 +36,7 @@ namespace Substrate.NET.Wallet.Keyring
         public const int SCRYPT_LENGTH = 32 + 3 * 4;
         public const short DEFAULT_SS58 = 42;
 
-        public IList<KeyringPair> Pairs { get; private set; } = new List<KeyringPair>();
+        public IList<Wallet> Wallets { get; private set; } = new List<Wallet>();
         public short Ss58Format { get; set; } = DEFAULT_SS58;
 
         public byte[] DecodeAddress(string address)
@@ -45,90 +53,81 @@ namespace Substrate.NET.Wallet.Keyring
         #region Get methods
         public IList<byte[]> GetPublicKeys()
         {
-            return Pairs.Select(x => x.PairInformation.PublicKey).ToList();
+            return Wallets.Select(x => x.Account.Bytes).ToList();
         }
 
-        public KeyringPair GetPair(byte[] publicKey)
+        public Wallet GetWallet(byte[] publicKey)
         {
-            return Pairs.FirstOrDefault(x => x.PairInformation.PublicKey.SequenceEqual(publicKey));
+            return Wallets.FirstOrDefault(x => x.Account.Bytes.SequenceEqual(publicKey));
         }
         #endregion
 
         #region Add methods
-        public void AddPair(KeyringPair keyringPair)
+
+        public void AddWallet(Wallet wallet)
         {
-            Pairs.Add(keyringPair);
+            Wallets.Add(wallet);
         }
 
-        public KeyringPair AddFromAddress(string address, Meta meta, byte[] encoded, KeyType keyType, List<WalletJson.EncryptedJsonEncoding> encryptedEncoding)
+        public Wallet AddFromAddress(string address, Meta meta, byte[] encoded, KeyType keyType, List<WalletJson.EncryptedJsonEncoding> encryptedEncoding)
         {
             var publicKey = Utils.GetPublicKeyFrom(address);
 
             var keyringPair = Pair.CreatePair(
-                KeyringAddress.Standard(keyType),
+                new KeyringAddress(keyType),
                 new PairInfo(publicKey, new byte[32]),
                 meta, encoded, encryptedEncoding, Ss58Format);
 
-            AddPair(keyringPair);
+            AddWallet(keyringPair);
             return keyringPair;
         }
 
-        public KeyringPair AddFromJson(string jsonWallet)
+        public Wallet AddFromJson(string jsonWallet)
         {
-            return AddFromJson(JsonConvert.DeserializeObject<WalletEncryption>(jsonWallet));
+            return AddFromJson(JsonConvert.DeserializeObject<WalletFile>(jsonWallet));
         }
 
-        public KeyringPair AddFromJson(WalletEncryption walletEncryption)
+        public Wallet AddFromJson(WalletFile walletEncryption)
         {
             var keyringPair = CreateFromJson(walletEncryption);
-            AddPair(keyringPair);
+            AddWallet(keyringPair);
             return keyringPair;
         }
 
-        public KeyringPair AddFromMnemonic(string[] mnemonic, Meta meta, KeyType keyType)
+        public Wallet AddFromMnemonic(string[] mnemonic, Meta meta, KeyType keyType)
             => AddFromMnemonic(string.Join(" ", mnemonic), meta, keyType);
 
-        public KeyringPair AddFromMnemonic(string mnemonic, Meta meta, KeyType keyType)
+        public Wallet AddFromMnemonic(string mnemonic, Meta meta, KeyType keyType)
         {
             return AddFromUri(mnemonic, meta, keyType);
         }
 
-        public KeyringPair AddFromUri(string uri, Meta meta, KeyType keyType)
+        public Wallet AddFromUri(string uri, Meta meta, KeyType keyType)
         {
             var pair = CreateFromUri(uri, meta, keyType);
-            AddPair(pair);
+            AddWallet(pair);
 
             return pair;
         }
 
-        public KeyringPair AddFromSeed(byte[] seed, Meta meta, KeyType keyType)
+        public Wallet AddFromSeed(byte[] seed, Meta meta, KeyType keyType)
         {
-            var pair = Pair.CreatePair(KeyringAddress.Standard(keyType), KeyPairFromSeed(keyType, seed), meta, null, null, Ss58Format);
-            AddPair(pair);
+            var pair = Pair.CreatePair(new KeyringAddress(keyType), KeyPairFromSeed(keyType, seed), meta, null, null, Ss58Format);
+            AddWallet(pair);
 
             return pair;
         }
         #endregion
 
         #region Create method
-        private KeyringPair CreateFromJson(WalletEncryption walletEncryption)
+        private Wallet CreateFromJson(WalletFile walletEncryption)
         {
             if (walletEncryption == null) throw new ArgumentNullException(nameof(walletEncryption));
 
             if (walletEncryption.encoding.version == 3 && walletEncryption.encoding.content[0] != "pkcs8")
                 throw new InvalidOperationException($"Unable to decode non pkcs8 type, found {walletEncryption.encoding.content[0]} instead");
 
-            KeyType keyType;
-            switch (walletEncryption.encoding.content[1].ToLowerInvariant())
-            {
-                case "ed25519":
-                    keyType = KeyType.Ed25519;
-                    break;
-                case "sr25519":
-                    keyType = KeyType.Sr25519;
-                    break;
-                default: throw new InvalidOperationException($"{walletEncryption.encoding.content[1]} type is not supported");
-            };
+            KeyType keyType = walletEncryption.GetKeyType();
 
             List<WalletJson.EncryptedJsonEncoding> encryptedEncoding = walletEncryption.encoding.type.Select(encrypt => WalletJson.EncryptedFromString(encrypt)).ToList();
 
@@ -138,12 +137,12 @@ namespace Substrate.NET.Wallet.Keyring
                 Convert.FromBase64String(walletEncryption.encoded);
 
             return Pair.CreatePair(
-                KeyringAddress.Standard(keyType),
+                new KeyringAddress(keyType),
                 new PairInfo(publicKey, null),
                 walletEncryption.meta, encoded, encryptedEncoding, Ss58Format);
         }
 
-        public KeyringPair CreateFromUri(string uri, Meta meta, KeyType keyType)
+        public Wallet CreateFromUri(string uri, Meta meta, KeyType keyType)
         {
             if (string.IsNullOrEmpty(uri)) throw new ArgumentNullException("uri");
 
@@ -180,7 +179,7 @@ namespace Substrate.NET.Wallet.Keyring
 
             var derivedPair = Uri.KeyFromPath(KeyPairFromSeed(keyType, seed), extract.Path, keyType);
 
-            return Pair.CreatePair(KeyringAddress.Standard(keyType), derivedPair, meta, null, null, Ss58Format);
+            return Pair.CreatePair(new KeyringAddress(keyType), derivedPair, meta, null, null, Ss58Format);
         }
         #endregion
 
