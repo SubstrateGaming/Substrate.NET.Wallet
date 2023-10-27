@@ -65,18 +65,19 @@ namespace Substrate.NET.Wallet.Test
             var input = readJsonFromFile(json);
 
             var keyring = new Keyring.Keyring();
-            var keyringPair1 = keyring.AddFromJson(input);
+            var wallet = keyring.AddFromJson(input);
 
-            var walletEncryptionSamePassword = keyringPair1.ToWalletFile(password);
+            var walletEncryptionSamePassword = wallet.ToWalletFile("walletName", password);
+
             var keyringPair2 = keyring.AddFromJson(walletEncryptionSamePassword);
 
-            Assert.That(keyringPair1.Account.Bytes, Is.EqualTo(keyringPair2.Account.Bytes));
+            Assert.That(wallet.Account.Bytes, Is.EqualTo(keyringPair2.Account.Bytes));
 
-            Assert.That(keyringPair1.IsLocked, Is.False);
+            Assert.That(wallet.IsLocked, Is.False);
             Assert.That(keyringPair2.IsLocked, Is.True);
 
             keyringPair2.Unlock(password);
-            Assert.That(keyringPair1.Account.PrivateKey, Is.EqualTo(keyringPair2.Account.PrivateKey));
+            Assert.That(wallet.Account.PrivateKey, Is.EqualTo(keyringPair2.Account.PrivateKey));
         }
 
         [TestCase("fun claim spawn flavor enable enrich advice canyon aisle aware energy level")]
@@ -100,7 +101,8 @@ namespace Substrate.NET.Wallet.Test
                 tags = null
             }, NetApi.Model.Types.KeyType.Sr25519);
 
-            var walletResult = kp.ToWalletFile("testPassword");
+            var walletResult = kp.ToWalletFile("walletName", "testPassword");
+            Assert.That(walletResult.meta.name, Is.EqualTo("walletName"));
             var jsonResult = walletResult.ToJson();
 
             Assert.That(jsonResult, Is.Not.Null);
@@ -169,10 +171,10 @@ namespace Substrate.NET.Wallet.Test
             Assert.That(firstWallet.IsStored, Is.False);
 
             // You can export you account to a Json file
-            var json = firstWallet.ToJson("myPassword");
-
+            var json = firstWallet.ToJson("myWalletName", "myPassword");
             // Import an account from a json file
             var secondWallet = keyring.AddFromJson(json);
+
             Assert.That(secondWallet.IsLocked, Is.True);
             // You need to unlock the account with the associated password
             secondWallet.Unlock("myPassword");

@@ -126,21 +126,39 @@ namespace Substrate.NET.Wallet
             return true;
         }
 
-        public WalletFile ToWalletFile(string password)
+        public WalletFile ToWalletFile(string walletName, string password)
         {
-            if (Meta.whenCreated == default)
-                Meta.whenCreated = DateTime.Now.Ticks;
-
             if (!IsUnlocked)
                 Unlock(password);
 
+            if (!IsValidWalletName(walletName))
+            {
+                throw new InvalidOperationException("Wallet name is invalid, please provide a proper wallet name. [A-Za-Z_]{20}.");
+            }
+
+            // Romain : Are we sure want to have this required ?
+            //if (!IsValidPassword(password))
+            //{
+            //    throw new InvalidOperationException("Wallet password is invalid, please provide a proper wallet password. [A-Za-Z_]{20}.");
+            //}
+
             Encoded = Recode(password);
-            return Pair.ToJsonPair(KeyType, Address, Meta, Encoded, !string.IsNullOrEmpty(password));
+
+            var generatedMeta = new Meta()
+            {
+                isHardware = false,
+                tags = new List<object>(),
+                whenCreated = DateTime.Now.Ticks,
+                name = walletName,
+                genesisHash = string.Empty
+            };
+
+            return Pair.ToJsonPair(KeyType, Address, generatedMeta, Encoded, !string.IsNullOrEmpty(password));
         }
 
-        public string ToJson(string password)
+        public string ToJson(string walletName, string password)
         {
-            return JsonConvert.SerializeObject(ToWalletFile(password));
+            return JsonConvert.SerializeObject(ToWalletFile(walletName, password));
         }
 
         public byte[] Recode(string password)
