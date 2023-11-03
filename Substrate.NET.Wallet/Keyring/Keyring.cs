@@ -1,5 +1,4 @@
-﻿using Newtonsoft.Json;
-using Schnorrkel.Keys;
+﻿using Schnorrkel.Keys;
 using Substrate.NET.Wallet.Extensions;
 using Substrate.NetApi;
 using Substrate.NetApi.Extensions;
@@ -84,7 +83,7 @@ namespace Substrate.NET.Wallet.Keyring
 
         public Wallet AddFromJson(string jsonWallet)
         {
-            return AddFromJson(JsonConvert.DeserializeObject<WalletFile>(jsonWallet));
+            return AddFromJson(System.Text.Json.JsonSerializer.Deserialize<WalletFile>(jsonWallet));
         }
 
         public Wallet AddFromJson(WalletFile walletEncryption)

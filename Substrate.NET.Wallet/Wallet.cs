@@ -1,7 +1,4 @@
-﻿using Chaos.NaCl;
-using Newtonsoft.Json;
-using Schnorrkel;
-using Serilog;
+﻿using Serilog;
 using Substrate.NET.Wallet.Extensions;
 using Substrate.NET.Wallet.Keyring;
 using Substrate.NetApi;
@@ -158,7 +155,7 @@ namespace Substrate.NET.Wallet
 
         public string ToJson(string walletName, string password)
         {
-            return JsonConvert.SerializeObject(ToWalletFile(walletName, password));
+            return System.Text.Json.JsonSerializer.Serialize(ToWalletFile(walletName, password));
         }
 
         public byte[] Recode(string password)
