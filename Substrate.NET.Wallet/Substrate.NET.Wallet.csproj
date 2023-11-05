@@ -23,7 +23,7 @@
 
 	<ItemGroup>
     <PackageReference Include="CryptSharpStandard" Version="1.0.0" />
-	  <PackageReference Include="Substrate.NET.API" Version="0.9.10" />
+	  <PackageReference Include="Substrate.NET.API" Version="0.9.11" />
 	</ItemGroup>
 
 </Project>
