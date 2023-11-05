@@ -10,7 +10,7 @@ namespace Substrate.NET.Wallet
     /// For further information please visit
     /// https://docs.microsoft.com/en-us/dotnet/api/system.security.cryptography.aesmanaged?view=netstandard-2.0
     /// </summary>
-    public class ManagedAes
+    public static class ManagedAes
     {
         public static byte[] EncryptStringToBytes_Aes(string plainText, byte[] Key, byte[] IV)
         {
