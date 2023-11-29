@@ -24,6 +24,7 @@ namespace Substrate.NET.Wallet.Test
         };
 
         [Test]
+        [TestCase("json_alice.json", "alicealice")]
         [TestCase("json_account1.json", "SUBSTRATE")]
         [TestCase("json_generated_1.json", "AccountTest4")]
         public void ValidJson_WithValidPassword_ShouldUnlock(string json, string password)
