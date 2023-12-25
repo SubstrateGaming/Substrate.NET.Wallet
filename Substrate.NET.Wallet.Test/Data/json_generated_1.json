@@ -9,7 +9,7 @@
       "scrypt",
       "xsalsa20-poly1305"
     ],
-    "version": 3
+    "version": "3"
   },
   "address": "15N38pUffZB6d8pkNAf6ydSoy5oTZoTruphv8Hm7J8GRf8Ci",
   "meta": {

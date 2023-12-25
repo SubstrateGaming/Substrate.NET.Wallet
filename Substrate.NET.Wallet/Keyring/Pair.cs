@@ -50,7 +50,7 @@ namespace Substrate.NET.Wallet.Keyring
         public static readonly byte[] PKCS8_HEADER = new byte[] { 48, 83, 2, 1, 1, 48, 5, 6, 3, 43, 101, 112, 4, 34, 4, 32 };
         public static readonly byte[] PKCS8_DIVIDER = new byte[] { 161, 35, 3, 33, 0 };
 
-        public const int ENCODING_VERSION = 3;
+        public const string ENCODING_VERSION = "3";
         public static readonly string[] ENCODING_NONE = { WalletJson.EncryptedToString(WalletJson.EncryptedJsonEncoding.None) };
         public static readonly string[] ENCODING = {
             WalletJson.EncryptedToString(WalletJson.EncryptedJsonEncoding.Scrypt),

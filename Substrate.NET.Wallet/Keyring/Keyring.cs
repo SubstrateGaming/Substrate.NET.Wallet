@@ -123,7 +123,7 @@ namespace Substrate.NET.Wallet.Keyring
         {
             if (walletEncryption == null) throw new ArgumentNullException(nameof(walletEncryption));
 
-            if (walletEncryption.encoding.version == 3 && walletEncryption.encoding.content[0] != "pkcs8")
+            if (walletEncryption.encoding.version == "3" && walletEncryption.encoding.content[0] != "pkcs8")
                 throw new InvalidOperationException($"Unable to decode non pkcs8 type, found {walletEncryption.encoding.content[0]} instead");
 
             KeyType keyType = walletEncryption.GetKeyType();

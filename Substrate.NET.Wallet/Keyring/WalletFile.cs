@@ -76,7 +76,7 @@ namespace Substrate.NET.Wallet.Keyring
     {
         public List<string> content { get; set; }
         public List<string> type { get; set; }
-        public int version { get; set; }
+        public string version { get; set; }
     }
 
     public class Meta
