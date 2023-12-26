@@ -4,6 +4,7 @@ using Substrate.NetApi.Model.Types;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Text.Json.Serialization;
 
 namespace Substrate.NET.Wallet.Keyring
 {
@@ -76,6 +77,8 @@ namespace Substrate.NET.Wallet.Keyring
     {
         public List<string> content { get; set; }
         public List<string> type { get; set; }
+
+        [JsonNumberHandling(JsonNumberHandling.AllowReadingFromString)]
         public int version { get; set; }
     }
 

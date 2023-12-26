@@ -17,6 +17,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="Data\json_alice.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="Data\json_account1.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
