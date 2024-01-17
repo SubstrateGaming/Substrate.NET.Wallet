@@ -47,13 +47,15 @@ namespace Substrate.NET.Wallet
             Account = new Account();
             Account.Create(keyType, privateKey, publicKey);
             EncryptedEncoding = encryptedEncoding;
+            KeyType = keyType;
         }
 
-        private Wallet(Account account, string walletName, WalletFile fileStore)
+        public Wallet(Account account, string walletName, WalletFile fileStore)
         {
             Account = account;
             FileName = walletName;
             FileStore = fileStore;
+            KeyType = account.KeyType;
         }
 
         /// <summary>
@@ -169,8 +171,14 @@ namespace Substrate.NET.Wallet
             if (!IsUnlocked)
                 throw new InvalidCastException("Cannot derive on a locked account");
 
-            var path = Keyring.Uri.KeyExtractPath(sUri);
-            var derived = Keyring.Uri.KeyFromPath(Account.ToPair(), path.Path, KeyType);
+            var res = Keyring.Uri.KeyExtractPath(sUri);
+
+            if(KeyType == KeyType.Ed25519 && res.Path.Any(x => x.IsSoft))
+            {
+                throw new InvalidOperationException($"Soft derivation paths are not allowed on {KeyType}");
+            }
+
+            var derived = Keyring.Uri.KeyFromPath(Account.ToPair(), res.Path, KeyType);
 
             return Pair.CreatePair(new KeyringAddress(KeyType), derived, Meta, null, EncryptedEncoding, Keyring.Keyring.DEFAULT_SS58);
         }

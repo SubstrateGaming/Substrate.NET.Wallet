@@ -1,6 +1,8 @@
 ﻿using NUnit.Framework;
+using Schnorrkel.Keys;
 using Substrate.NET.Wallet.Keyring;
 using Substrate.NetApi;
+using Substrate.NetApi.Model.Types;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,20 +13,12 @@ namespace Substrate.NET.Wallet.Test.Keyrings
 {
     public class PairTests
     {
-        //private readonly Wallet alicePairEd25519 = new Wallet(
-        //    "5GoKvZWG5ZPYL1WUovuHW3zJBWBP5eT8CbqjdRY4Q6iMaQua",
-        //    new byte[] { 209, 114, 167, 76, 218, 76, 134, 89, 18, 195, 43, 160, 168, 10, 87, 174, 105, 171, 174, 65, 14, 92, 203, 89, 222, 232, 78, 47, 68, 50, 219, 79 },
-        //    null,
-        //    null,
-        //    new PairInfo(
-        //        new byte[] { 209, 114, 167, 76, 218, 76, 134, 89, 18, 195, 43, 160, 168, 10, 87, 174, 105, 171, 174, 65, 14, 92, 203, 89, 222, 232, 78, 47, 68, 50, 219, 79 },
-        //        null
-        //    ),
-        //    NetApi.Model.Types.KeyType.Ed25519,
-        //    null
-        //);
+        public MiniSecret MiniSecretAlice => new MiniSecret(Utils.HexToByteArray("0xe5be9a5092b81bca64be81d212e7f2f9eba183bb7a90954f7b76361f6edb5c0a"), ExpandMode.Ed25519);
+        public MiniSecret MiniSecretBob => new MiniSecret(Utils.HexToByteArray("0x398f0c28f98885e046333d4a41c19cee4c37368a9832c6502f6cfd182e2aef89"), ExpandMode.Ed25519);
+        public Account AliceSr25519 => Account.Build(KeyType.Sr25519, MiniSecretAlice.ExpandToSecret().ToBytes(), MiniSecretBob.GetPair().Public.Key);
+        public Account BobEd25519 => Account.Build(KeyType.Ed25519, MiniSecretBob.ExpandToSecret().ToBytes(), MiniSecretBob.GetPair().Public.Key);
 
-        [Test, Ignore("Derive debug")]
+        [Test]
         public void AllowDerivationOnAlice()
         {
             var alice = Pair.CreatePair(

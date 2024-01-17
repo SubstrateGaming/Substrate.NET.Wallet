@@ -214,7 +214,7 @@ namespace Substrate.NET.Wallet.Keyring
             return encoded;
         }
 
-        public PairInfo KeyPairFromSeed(KeyType keyType, byte[] seed)
+        public static PairInfo KeyPairFromSeed(KeyType keyType, byte[] seed)
         {
             switch (keyType)
             {

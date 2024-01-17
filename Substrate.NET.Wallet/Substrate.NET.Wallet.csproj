@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
 		<PackageId>Substrate.NET.Wallet</PackageId>
@@ -24,6 +24,10 @@
 	<ItemGroup>
     <PackageReference Include="CryptSharpStandard" Version="1.0.0" />
 	  <PackageReference Include="Substrate.NET.API" Version="0.9.11" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <ProjectReference Include="..\..\Schnorrkel\Schnorrkel\Schnorrkel.csproj" />
 	</ItemGroup>
 
 </Project>

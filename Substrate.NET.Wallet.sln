@@ -7,6 +7,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Substrate.NET.Wallet", "Sub
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Substrate.NET.Wallet.Test", "Substrate.NET.Wallet.Test\Substrate.NET.Wallet.Test.csproj", "{02DDCC1C-B34D-4480-9188-82A3DD5FB957}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Schnorrkel", "..\Schnorrkel\Schnorrkel\Schnorrkel.csproj", "{CE3BE062-F7CC-414C-ADC0-CFCBDEDE6959}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{02DDCC1C-B34D-4480-9188-82A3DD5FB957}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{02DDCC1C-B34D-4480-9188-82A3DD5FB957}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{02DDCC1C-B34D-4480-9188-82A3DD5FB957}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CE3BE062-F7CC-414C-ADC0-CFCBDEDE6959}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CE3BE062-F7CC-414C-ADC0-CFCBDEDE6959}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CE3BE062-F7CC-414C-ADC0-CFCBDEDE6959}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CE3BE062-F7CC-414C-ADC0-CFCBDEDE6959}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
