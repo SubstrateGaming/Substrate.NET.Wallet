@@ -47,11 +47,12 @@ namespace Substrate.NET.Wallet.Test.Keyrings
         }
 
         [Test]
-        public void CreateEd25519_WithMnemonic()
+        [TestCase("seed sock milk update focus rotate barely fade car face mechanic mercy", "5DkQP32jP4DVJLWWBRBoZF2tpWjqFrcrTBo6H5NcSk7MxKCC")]
+        public void CreateEd25519_WithMnemonic(string mnemonic, string publicKey)
         {
             var kp = keyring.AddFromUri(
-                    "seed sock milk update focus rotate barely fade car face mechanic mercy", null, NetApi.Model.Types.KeyType.Ed25519);
-            Assert.That(kp.Address, Is.EqualTo("5DkQP32jP4DVJLWWBRBoZF2tpWjqFrcrTBo6H5NcSk7MxKCC"));
+                    mnemonic, null, NetApi.Model.Types.KeyType.Ed25519);
+            Assert.That(kp.Address, Is.EqualTo(publicKey));
         }
 
         [Test]

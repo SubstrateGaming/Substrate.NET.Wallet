@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace Substrate.NET.Wallet.Keyring
+namespace Substrate.NET.Wallet.Derivation
 {
     public static class Keys
     {
@@ -25,7 +25,19 @@ namespace Substrate.NET.Wallet.Keyring
         public const int KEYPAIR_LENGTH = SECRET_KEY_LENGTH + PUBLIC_KEY_LENGTH;
 
         public const int CHAIN_CODE_LENGTH = 32;
-        
-        
+    }
+
+    public class KeyExtractResult
+    {
+        public string DerivePath { get; set; }
+        public string Password { get; set; }
+        public IList<DeriveJunction> Path { get; set; }
+        public string Phrase { get; set; }
+    }
+
+    public class KeyExtractPathResult
+    {
+        public IList<string> Parts { get; set; }
+        public IList<DeriveJunction> Path { get; set; }
     }
 }

@@ -37,6 +37,11 @@ namespace Substrate.NET.Wallet.Keyring
 
         public byte[] PublicKey { get; set; }
         public byte[] SecretKey { get; set; }
+
+        public byte[] ToBytes()
+        {
+            return SecretKey.Concat(PublicKey).ToArray();
+        }
     }
 
     public static class Pair

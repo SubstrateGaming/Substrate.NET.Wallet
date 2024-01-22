@@ -96,6 +96,7 @@ namespace Substrate.NET.Wallet.Test.Keyrings
             Assert.That(res.Path[1].ChainCode, Is.EqualTo(HelloWorldBytes));
         }
 
+        [Test]
         public void KeyExtractUri_DeriveMultiple_3()
         {
             var res = Uri.KeyExtractUri("hello world//1/DOT///password");
@@ -111,6 +112,7 @@ namespace Substrate.NET.Wallet.Test.Keyrings
             Assert.That(res.Path[1].ChainCode, Is.EqualTo(HelloWorldDotBytes));
         }
 
+        [Test]
         public void KeyExtractUri_DeriveMultiple_4()
         {
             var res = Uri.KeyExtractUri("hello world/1//DOT///password");
@@ -126,6 +128,7 @@ namespace Substrate.NET.Wallet.Test.Keyrings
             Assert.That(res.Path[1].ChainCode, Is.EqualTo(HelloWorldDotBytes));
         }
 
+        [Test]
         public void KeyExtractUri_DeriveMultiple_Alice()
         {
             var res = Uri.KeyExtractUri("bottom drive obey lake curtain smoke basket hold race lonely fit walk//Alice");

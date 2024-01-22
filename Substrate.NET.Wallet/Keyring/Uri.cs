@@ -1,8 +1,4 @@
-﻿using Chaos.NaCl;
-using Schnorrkel;
-using Schnorrkel.Keys;
-using Schnorrkel.Ristretto;
-using Schnorrkel.Scalars;
+﻿using Schnorrkel.Keys;
 using Substrate.NET.Wallet.Derivation;
 using Substrate.NET.Wallet.Extensions;
 using Substrate.NetApi;
@@ -11,115 +7,12 @@ using Substrate.NetApi.Model.Types;
 using Substrate.NetApi.Model.Types.Primitive;
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
-using System.Net.Sockets;
 using System.Numerics;
-using System.Reflection.Emit;
-using System.Security.Cryptography;
-using System.Text;
 using System.Text.RegularExpressions;
 
 namespace Substrate.NET.Wallet.Keyring
 {
-    public class KeyExtractResult
-    {
-        public string DerivePath { get; set; }
-        public string Password { get; set; }
-        public IList<DeriveJunction> Path { get; set; }
-        public string Phrase { get; set; }
-    }
-
-    public class KeyExtractPathResult
-    {
-        public IList<string> Parts { get; set; }
-        public IList<DeriveJunction> Path { get; set; }
-    }
-
-    public class DeriveJunction
-    {
-        public const int JUNCTION_ID_LEN = 32;
-        public const string NUMBER_PATTERN = "^\\d+$";
-
-        public bool IsHard { get; internal set; }
-        public bool IsSoft => !IsHard;
-        public byte[] ChainCode { get; internal set; }
-
-        public static byte[] CompactAddLength(byte[] input)
-        {
-            var u256 = new U256(input.Length);
-            var lenghtCompact = new CompactInteger(u256);
-            var encode = lenghtCompact.Encode();
-            
-            var compacted = new List<byte>();
-            compacted.AddRange(encode);
-            compacted.AddRange(input);
-            return compacted.ToArray();
-        }
-
-        public DeriveJunction Hard(string value)
-        {
-            return Soft(value).Harden();
-        }
-
-        public DeriveJunction Harden() {
-            IsHard = true;
-            return this;
-        }
-
-        public DeriveJunction Soft(byte[] value)
-        {
-            if(value.Length > JUNCTION_ID_LEN)
-            {
-                return Soft(HashExtension.Blake2(value, 256));
-            }
-
-            ChainCode = value.BytesFixLength(256, true);
-
-            return this;
-        }
-        public DeriveJunction Soft(BigInteger value)
-        {
-            return Soft(value.ToByteArray());
-        }
-
-        public DeriveJunction Soft(string value)
-        {
-            if(value.IsHex())
-                return Soft(Utils.HexToByteArray(value));
-
-            return Soft(CompactAddLength(value.ToBytes()));
-        }
-
-        public DeriveJunction Soften()
-        {
-            IsHard = false;
-            return this;
-        }
-
-        public static DeriveJunction From(string p)
-        {
-            var result = new DeriveJunction();
-
-            (string code, bool isHard) = p.StartsWith("/") ? (p.Substring(1), true) : (p, false);
-
-            var resultRegex = Regex.Match(code, NUMBER_PATTERN, RegexOptions.None, TimeSpan.FromMilliseconds(100));
-            if(resultRegex.Success)
-            {
-                BigInteger bigInteger;
-                if(BigInteger.TryParse(resultRegex.Value, out bigInteger))
-                    result.Soft(bigInteger);
-                else
-                    throw new InvalidOperationException("Impossible to get big integer, while regex match number ?!");
-            } else
-            {
-                result.Soft(code);
-            }
-
-            return isHard ? result.Harden() : result;
-        }
-    }
-
     public static class Uri
     {
         public const string DEV_PHRASE = "bottom drive obey lake curtain smoke basket hold race lonely fit walk";
@@ -127,12 +20,6 @@ namespace Substrate.NET.Wallet.Keyring
 
         public const string CaptureUriPattern = "^(\\w+( \\w+)*)((\\/\\/?[^\\/]+)*)(\\/\\/\\/(.*))?$";
         public const string CaptureJunctionPattern = "\\/(\\/?)([^/]+)";
-
-        public static string GetUri(string mnemonic, string derivePath)
-        {
-            // We don't handle (yet...)  KeyType ed25519-ledger and Ethereum
-            return $"{mnemonic}{derivePath}";
-        }
 
         public static KeyExtractResult KeyExtractUri(string suri)
         {
@@ -196,8 +83,7 @@ namespace Substrate.NET.Wallet.Keyring
 
         private static PairInfo CreateDerive(KeyType keyType, DeriveJunction path, PairInfo pair)
         {
-            var pairBytes = pair.SecretKey.Concat(pair.PublicKey).ToArray();
-            var keyPair = KeyPair.FromHalfEd25519Bytes(pairBytes);
+            var keyPair = KeyPair.FromHalfEd25519Bytes(pair.ToBytes());
 
             switch (keyType)
             {
@@ -226,7 +112,10 @@ namespace Substrate.NET.Wallet.Keyring
         }
 
         public static byte[] Sr25519DeriveHard(byte[] seed, byte[] chainCode)
-            => Sr25519DeriveHard(KeyPair.FromHalfEd25519Bytes(seed), chainCode);
+        {
+            var miniSecret = new MiniSecret(seed, ExpandMode.Ed25519);
+            return Sr25519DeriveHard(miniSecret.GetPair(), chainCode);
+        }
 
         public static byte[] Sr25519DeriveHard(KeyPair pair , byte[] chainCode)
         {
@@ -238,8 +127,11 @@ namespace Substrate.NET.Wallet.Keyring
             return miniSecretderived.GetPair().ToHalfEd25519Bytes();
         }
 
-        public static byte[] Sr25519DeriveSoft(byte[] seed, byte[] chainCode) 
-            => Sr25519DeriveSoft(KeyPair.FromHalfEd25519Bytes(seed), chainCode);
+        public static byte[] Sr25519DeriveSoft(byte[] seed, byte[] chainCode)
+        {
+            var miniSecret = new MiniSecret(seed, ExpandMode.Ed25519);
+            return Sr25519DeriveSoft(miniSecret.GetPair(), chainCode);
+        }
 
         public static byte[] Sr25519DeriveSoft(KeyPair pair, byte[] chainCode)
         {
