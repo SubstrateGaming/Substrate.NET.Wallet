@@ -26,8 +26,4 @@
 	  <PackageReference Include="Substrate.NET.API" Version="0.9.11" />
 	</ItemGroup>
 
-	<ItemGroup>
-	  <ProjectReference Include="..\..\Schnorrkel\Schnorrkel\Schnorrkel.csproj" />
-	</ItemGroup>
-
 </Project>
