@@ -1,4 +1,4 @@
-﻿using Schnorrkel.Keys;
+﻿using Substrate.NET.Schnorrkel.Keys;
 using System;
 using System.Collections.Generic;
 using System.Text;

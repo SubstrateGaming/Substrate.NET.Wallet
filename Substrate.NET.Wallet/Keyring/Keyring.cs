@@ -1,4 +1,4 @@
-﻿using Schnorrkel.Keys;
+﻿using Substrate.NET.Schnorrkel.Keys;
 using Substrate.NET.Wallet.Derivation;
 using Substrate.NET.Wallet.Extensions;
 using Substrate.NetApi;
@@ -247,6 +247,27 @@ namespace Substrate.NET.Wallet.Keyring
                 default:
                     throw new NotImplementedException($"KeyType {keyType} isn't implemented!");
             }
+        }
+
+        public static bool IsMnemonicPhraseValid(string[] mnemonic, Mnemonic.BIP39Wordlist language = Mnemonic.BIP39Wordlist.English)
+            => IsMnemonicPhraseValid(string.Join(" ", mnemonic), language);
+
+        public static bool IsMnemonicPhraseValid(string mnemonic, Mnemonic.BIP39Wordlist language = Mnemonic.BIP39Wordlist.English)
+        {
+            if (string.IsNullOrEmpty(mnemonic)) return false;
+
+            var words = mnemonic.Split(' ');
+
+            // Mnemonic size should be equal to 12, 15, 18, 21 or 24 words
+            if (
+                new byte[5] { 12, 15, 18, 21, 24 }.Any(l => l == words.Length) && 
+                words.All(p => p.Length > 2) &&
+                Mnemonic.ValidateMnemonic(mnemonic, language))
+            {
+                    return true;
+            }
+
+            return false;
         }
 
         private static void ensureDataIsSet(byte[] data, string message = "No data available")
