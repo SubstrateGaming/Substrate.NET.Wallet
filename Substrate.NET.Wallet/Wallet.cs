@@ -38,6 +38,16 @@ namespace Substrate.NET.Wallet
         public string FileName { get; private set; }
         public WalletFile FileStore { get; private set; }
 
+        /// <summary>
+        /// Account name policy for this wallet
+        /// </summary>
+        public WordManager AccountNamePolicy { get; set; } = WordManager.StandardAccountName;
+
+        /// <summary>
+        /// Password policy for this wallet
+        /// </summary>
+        public WordManager PasswordPolicy { get; set; } = WordManager.StandardPassword;
+
         public Wallet(string address, byte[] encoded, Meta meta, byte[] publicKey, byte[] privateKey, KeyType keyType, List<WalletJson.EncryptedJsonEncoding> encryptedEncoding)
         {
             Address = address;
@@ -50,11 +60,12 @@ namespace Substrate.NET.Wallet
             KeyType = keyType;
         }
 
-        public Wallet(Account account, string walletName, WalletFile fileStore)
+        private Wallet(Account account, string walletName, WalletFile fileStore)
         {
             Account = account;
             FileName = walletName;
             FileStore = fileStore;
+            _isStored = true;
             KeyType = account.KeyType;
         }
 
@@ -73,7 +84,8 @@ namespace Substrate.NET.Wallet
         /// <value>
         ///   <c>true</c> if this instance is created; otherwise, <c>false</c>.
         /// </value>
-        public bool IsStored => FileStore != null;
+        public bool IsStored => _isStored;
+        private bool _isStored = false;
 
         /// <summary>
         /// Unlocks the account
@@ -81,7 +93,6 @@ namespace Substrate.NET.Wallet
         /// <param name="password">The password.</param>
         /// <param name="userEncoded"></param>
         /// <returns></returns>
-        /// <exception cref="Exception">Public key check failed!</exception>
         public bool Unlock(string password, byte[] userEncoded = null)
         {
             if (IsUnlocked)
@@ -130,16 +141,15 @@ namespace Substrate.NET.Wallet
             if (!IsUnlocked)
                 Unlock(password);
 
-            if (!IsValidWalletName(walletName))
+            if (!AccountNamePolicy.IsValid(walletName))
             {
-                throw new InvalidOperationException("Wallet name is invalid, please provide a proper wallet name. [A-Za-Z_]{20}.");
+                throw new InvalidOperationException($"Wallet name is invalid : {string.Concat(" | ", AccountNamePolicy.GetErrors(walletName))}");
             }
 
-            // Romain : Are we sure want to have this required ?
-            //if (!IsValidPassword(password))
-            //{
-            //    throw new InvalidOperationException("Wallet password is invalid, please provide a proper wallet password. [A-Za-Z_]{20}.");
-            //}
+            if (!PasswordPolicy.IsValid(password))
+            {
+                throw new InvalidOperationException($"Wallet password is invalid, please provide a proper wallet password. {string.Concat(" | ", AccountNamePolicy.GetErrors(walletName))}");
+            }
 
             Encoded = Recode(password);
 
@@ -181,6 +191,19 @@ namespace Substrate.NET.Wallet
             var derived = Keyring.Uri.KeyFromPath(Account.ToPair(), res.Path, KeyType);
 
             return Pair.CreatePair(new KeyringAddress(KeyType), derived, Meta, null, EncryptedEncoding, Keyring.Keyring.DEFAULT_SS58);
+        }
+
+        /// <summary>
+        /// Save the account
+        /// </summary>
+        /// <returns></returns>
+        public void Save(string walletName, string password)
+        {
+            if (string.IsNullOrEmpty(Meta.name)) 
+                throw new InvalidOperationException($"No wallet name has been specified. Please update {nameof(Meta)}.{nameof(Meta.name)} propery with account name");
+
+            Caching.Persist(Wallet.ConcatWalletFileType(Meta.name), ToJson(walletName, password));
+            _isStored = true;
         }
 
         /// <summary>
@@ -309,8 +332,8 @@ namespace Substrate.NET.Wallet
         /// <returns>
         ///   <c>true</c> if [is valid wallet name] [the specified wallet name]; otherwise, <c>false</c>.
         /// </returns>
-        public static bool IsValidWalletName(string walletName) => walletName.Length > 4 && walletName.Length < 21 &&
-                   walletName.All(c => char.IsLetterOrDigit(c) || c.Equals('_'));
+        public static bool IsValidWalletName(string walletName) 
+            => WordManager.StandardAccountName.IsValid(walletName);
 
         /// <summary>
         /// Determines whether [is valid password] [the specified password].
@@ -320,8 +343,7 @@ namespace Substrate.NET.Wallet
         ///   <c>true</c> if [is valid password] [the specified password]; otherwise, <c>false</c>.
         /// </returns>
         public static bool IsValidPassword(string password)
-            => password.Length > 7 && password.Length < 21 && password.Any(char.IsUpper) &&
-                   password.Any(char.IsLower) && password.Any(char.IsDigit);
+            => WordManager.StandardPassword.IsValid(password);
 
         /// <summary>
         /// Adds the type of the wallet file.

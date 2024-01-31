@@ -20,20 +20,14 @@ namespace Substrate.NET.Wallet
         /// </summary>
         private int maximumLength = int.MaxValue;
 
-        /// <summary>
-        /// Upercase letter requirement
-        /// </summary>
-        private bool requireUppercase = false;
+        private readonly ShouldManager should;
+        private readonly ShouldNotManager shouldNot;
 
-        /// <summary>
-        /// Lowercase letter requirement
-        /// </summary>
-        private bool requireLowercase = false;
-
-        /// <summary>
-        /// Digit letter requirement
-        /// </summary>
-        private bool requireDigit = false;
+        private WordManager()
+        {
+            should = new ShouldManager(this);
+            shouldNot = new ShouldNotManager(this);
+        }
 
         /// <summary>
         /// Create a new password manager
@@ -43,18 +37,6 @@ namespace Substrate.NET.Wallet
         {
             return new WordManager();
         }
-
-        /// <summary>
-        /// Get default value
-        /// </summary>
-        /// <returns></returns>
-        public static WordManager StandardRequirement() => 
-            WordManager.Create()
-            .WithMinimumLength(4)
-            .WithMaximumLength(20)
-            .WithAtLeastOneUppercase()
-            .WithAtLeastOneLowercase()
-            .WithAtLeastOneDigit();
 
         public WordManager WithMinimumLength(int length)
         {
@@ -72,47 +54,157 @@ namespace Substrate.NET.Wallet
             return this;
         }
 
-        public WordManager WithAtLeastOneUppercase()
+        public ShouldManager Should()
         {
-            requireUppercase = true;
-            return this;
+            return should;
         }
 
-        public WordManager WithAtLeastOneLowercase()
+        public ShouldNotManager ShouldNot()
         {
-            requireLowercase = true;
-            return this;
+            return shouldNot;
         }
 
-        public WordManager WithAtLeastOneDigit()
-        {
-            requireDigit = true;
-            return this;
-        }
-
-        
-
-        public IEnumerable<string> GetErrors(string password)
+        public IEnumerable<string> GetErrors(string word)
         {
             var errors = new List<string>();
-            if (password.Length < minimumLength)
+            if (word.Length < minimumLength)
                 errors.Add($"Length should be at least {minimumLength} caracters");
 
-            if (password.Length > maximumLength)
+            if (word.Length > maximumLength)
                 errors.Add($"Length should be maximum {maximumLength} caracters");
 
-            if (requireUppercase && !password.Any(char.IsUpper))
-                errors.Add($"Uppercase letter required");
-
-            if (requireLowercase && !password.Any(char.IsLower))
-                errors.Add($"Lowercase letter required");
-
-            if (requireDigit && !password.Any(char.IsDigit))
-                errors.Add($"Digit required");
+            errors.AddRange(should.GetErrors(word));
+            errors.AddRange(shouldNot.GetErrors(word));
 
             return errors;
         }
 
         public bool IsValid(string password) => !GetErrors(password).Any();
+
+        /// <summary>
+        /// Get account name default policy
+        /// </summary>
+        /// <returns></returns>
+        public static WordManager StandardAccountName =>
+            WordManager.Create()
+            .WithMinimumLength(4)
+            .WithMaximumLength(20)
+            .Should().AtLeastOneLowercase();
+
+        /// <summary>
+        /// Get password default policy
+        /// </summary>
+        /// <returns></returns>
+        public static WordManager StandardPassword =>
+            WordManager.Create()
+            .WithMinimumLength(4).WithMaximumLength(20)
+            .Should().AtLeastOneDigit()
+            .Should().AtLeastOneLowercase()
+            .Should().AtLeastOneUppercase();
+
+        public abstract class ShouldAbstract
+        {
+            protected WordManager wm;
+
+            protected ShouldAbstract(WordManager wm)
+            {
+                this.wm = wm;
+            }
+
+            /// <summary>
+            /// Upercase letter requirement
+            /// </summary>
+            protected int? uppercase = null;
+
+            /// <summary>
+            /// Lowercase letter requirement
+            /// </summary>
+            protected int? lowercase = null;
+
+            /// <summary>
+            /// Digit letter requirement
+            /// </summary>
+            protected int? digit = null;
+
+            public IEnumerable<string> GetErrors(string word)
+            {
+                var errors = new List<string>();
+
+                var hasUpper = word.Any(char.IsUpper);
+                if (hasUpper && uppercase != null && uppercase.Value == 0)
+                    errors.Add($"Uppercase letter forbiden");
+
+                if (!hasUpper && uppercase != null && uppercase.Value > 0)
+                    errors.Add($"Uppercase letter required");
+
+                var hasLower = word.Any(char.IsLower);
+                if (hasLower && lowercase != null && lowercase.Value == 0)
+                    errors.Add($"Lowercase letter forbiden");
+
+                if (!hasLower && lowercase != null && lowercase.Value > 0)
+                    errors.Add($"Lowercase letter required");
+
+                var hasDigit = word.Any(char.IsDigit);
+                if (hasDigit && digit != null && digit.Value == 0)
+                    errors.Add($"Digit forbiden");
+
+                if (!hasDigit && digit != null && digit.Value > 0)
+                    errors.Add($"Digit required");
+
+                return errors;
+            }
+        }
+
+        public class ShouldManager : ShouldAbstract
+        {
+
+            public ShouldManager(WordManager wm) : base(wm)
+            {
+            }
+
+            public WordManager AtLeastOneUppercase()
+            {
+                uppercase = 1;
+                return wm;
+            }
+
+            public WordManager AtLeastOneLowercase()
+            {
+                lowercase = 1;
+                return wm;
+            }
+
+            public WordManager AtLeastOneDigit()
+            {
+                digit = 1;
+                return wm;
+            }
+        }
+
+        public class ShouldNotManager : ShouldManager {
+
+
+            public ShouldNotManager(WordManager wm) : base(wm)
+            {
+            }
+
+            public WordManager HaveUppercase()
+            {
+                uppercase = 0;
+                return wm;
+            }
+
+            public WordManager HaveLowercase()
+            {
+                lowercase = 0;
+                return wm;
+            }
+
+            public WordManager HaveDigit()
+            {
+                digit = 0;
+                return wm;
+            }
+        }
     }
 }

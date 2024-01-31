@@ -9,24 +9,37 @@ namespace Substrate.NET.Wallet.Test
 {
     public class WordManagerTests
     {
-        private WordManager _wordManager;
+        private WordManager _wordManagerWithRequirement;
+        private WordManager _wordManagerWithForbidden
+            ;
 
         [SetUp]
         public void Setup()
         {
-            _wordManager = WordManager.Create()
+            _wordManagerWithRequirement = WordManager.Create()
             .WithMinimumLength(4)
             .WithMaximumLength(20)
-            .WithAtLeastOneUppercase()
-            .WithAtLeastOneLowercase()
-            .WithAtLeastOneDigit();
+            .Should().AtLeastOneUppercase()
+            .Should().AtLeastOneLowercase()
+            .Should().AtLeastOneDigit();
+
+            _wordManagerWithForbidden = WordManager.Create()
+                .ShouldNot().HaveLowercase()
+                .ShouldNot().HaveDigit();
         }
 
         [Test]
         [TestCase("E7ird@M!jGc&")]
-        public void WordManager_WithValidPassword_ShouldSuceed(string phrase)
+        public void WordManager_WithShould_WithValidInput_ShouldSuceed(string phrase)
         {
-            Assert.IsTrue(_wordManager.IsValid(phrase));
+            Assert.IsTrue(_wordManagerWithRequirement.IsValid(phrase));
+        }
+
+        [Test]
+        [TestCase("ONLYUPPER")]
+        public void WordManager_WithShouldNot_WithValidInput_ShouldSuceed(string phrase)
+        {
+            Assert.IsTrue(_wordManagerWithForbidden.IsValid(phrase));
         }
 
         [Test]
@@ -37,11 +50,22 @@ namespace Substrate.NET.Wallet.Test
         [TestCase("oOoOoOoO", 1)]
         [TestCase("o111111111111", 1)]
         [TestCase("O111111111111", 1)]
-        public void WordManager_WithInvalidPassword_ShouldFail(string word, int nbError)
+        public void WordManager_ShouldPattern_WithInvalidInput_ShouldFail(string word, int nbError)
         {
-            Assert.IsFalse(_wordManager.IsValid(word));
+            Assert.IsFalse(_wordManagerWithRequirement.IsValid(word));
 
-            var errorCount = _wordManager.GetErrors(word).Count();
+            var errorCount = _wordManagerWithRequirement.GetErrors(word).Count();
+            Assert.That(errorCount, Is.EqualTo(nbError));
+        }
+
+        [Test]
+        [TestCase("Xx", 1)]
+        [TestCase("Xx0", 2)]
+        public void WordManager_ShouldNotPattern_WithInvalidInput_ShouldFail(string word, int nbError)
+        {
+            Assert.IsFalse(_wordManagerWithForbidden.IsValid(word));
+
+            var errorCount = _wordManagerWithForbidden.GetErrors(word).Count();
             Assert.That(errorCount, Is.EqualTo(nbError));
         }
 

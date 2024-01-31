@@ -29,8 +29,8 @@ namespace Substrate.NET.Wallet.Test
             Assert.False(Wallet.IsValidPassword("ABCDEFGH"));
             Assert.False(Wallet.IsValidPassword("abcdefgh"));
             Assert.False(Wallet.IsValidPassword("ABCDefgh"));
-            Assert.False(Wallet.IsValidPassword("1BCDefg"));
-
+            
+            Assert.True(Wallet.IsValidPassword("1BCDefg"));
             Assert.True(Wallet.IsValidPassword("ABCDefg1"));
         }
 
@@ -39,9 +39,9 @@ namespace Substrate.NET.Wallet.Test
         {
             Assert.False(Wallet.IsValidWalletName("1234"));
             Assert.False(Wallet.IsValidWalletName("ABC_/"));
+            Assert.False(Wallet.IsValidWalletName("1111111"));
 
             Assert.True(Wallet.IsValidWalletName("wal_let"));
-            Assert.True(Wallet.IsValidWalletName("1111111"));
         }
     }
 }

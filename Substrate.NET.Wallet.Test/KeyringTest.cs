@@ -63,6 +63,7 @@ namespace Substrate.NET.Wallet.Test
 
             var keyring = new Keyring.Keyring();
             var wallet = keyring.AddFromJson(input);
+            wallet.PasswordPolicy = passwordLightPolicy;
 
             var walletEncryptionSamePassword = wallet.ToWalletFile("walletName", password);
 
@@ -98,7 +99,7 @@ namespace Substrate.NET.Wallet.Test
                 tags = null
             }, NetApi.Model.Types.KeyType.Sr25519);
 
-            var walletResult = kp.ToWalletFile("walletName", "testPassword");
+            var walletResult = kp.ToWalletFile("walletName", "testPassword1");
             Assert.That(walletResult.meta.name, Is.EqualTo("walletName"));
             var jsonResult = walletResult.ToJson();
 
@@ -149,7 +150,7 @@ namespace Substrate.NET.Wallet.Test
         public void WikiExample_Test()
         {
             // Create a new Keyring, by default ss58 format is 42 (Substrate standard address)
-            var keyring = new Substrate.NET.Wallet.Keyring.Keyring();
+            var keyring = new Keyring.Keyring();
 
             // You can specify ss58 address if needed (check SS58 regitry here : https://github.com/paritytech/ss58-registry/blob/main/ss58-registry.json)
             keyring.Ss58Format = 0; // Polkadot
@@ -163,6 +164,8 @@ namespace Substrate.NET.Wallet.Test
 
             // Import an account from mnemonic automatically unlock all feature
             var firstWallet = keyring.AddFromMnemonic(existingMnemonicAccount, new Meta() { name = "My account name"}, NetApi.Model.Types.KeyType.Ed25519);
+            firstWallet.PasswordPolicy = passwordLightPolicy;
+
             // firstPair.IsLocked => false
             Assert.That(firstWallet.IsLocked, Is.False);
             Assert.That(firstWallet.IsStored, Is.False);
@@ -171,6 +174,7 @@ namespace Substrate.NET.Wallet.Test
             var json = firstWallet.ToJson("myWalletName", "myPassword");
             // Import an account from a json file
             var secondWallet = keyring.AddFromJson(json);
+            secondWallet.PasswordPolicy = passwordLightPolicy;
 
             Assert.That(secondWallet.IsLocked, Is.True);
             // You need to unlock the account with the associated password

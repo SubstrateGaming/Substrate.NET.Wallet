@@ -13,9 +13,11 @@ namespace Substrate.NET.Wallet.Test
     public class MainTests
     {
         protected Dictionary<string, PairDefTest> pairDefs;
-
+        protected WordManager passwordLightPolicy;
         protected MainTests()
         {
+            passwordLightPolicy = WordManager.Create().WithMinimumLength(2);
+
             pairDefs = new Dictionary<string, PairDefTest>() {
                 { "Alice", new PairDefTest()
                     {
