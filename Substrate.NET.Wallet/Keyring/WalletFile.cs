@@ -1,9 +1,6 @@
-﻿using CryptSharp.Utility;
-using Newtonsoft.Json;
-using Substrate.NetApi.Model.Types;
+﻿using Substrate.NetApi.Model.Types;
 using System;
 using System.Collections.Generic;
-using System.Text;
 using System.Text.Json.Serialization;
 
 namespace Substrate.NET.Wallet.Keyring
@@ -57,7 +54,7 @@ namespace Substrate.NET.Wallet.Keyring
 
         public string ToJson()
         {
-            return JsonConvert.SerializeObject(this);
+            return System.Text.Json.JsonSerializer.Serialize(this);
         }
 
         public KeyType GetKeyType()
