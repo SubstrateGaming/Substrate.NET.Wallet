@@ -91,7 +91,7 @@ namespace Substrate.NET.Wallet.Keyring
 
         public Wallet AddFromJson(WalletFile walletEncryption)
         {
-            var keyringPair = CreateFromJson(walletEncryption);
+            var keyringPair = CreateFromJson(walletEncryption, Ss58Format);
             AddWallet(keyringPair);
             return keyringPair;
         }
@@ -106,7 +106,7 @@ namespace Substrate.NET.Wallet.Keyring
 
         public Wallet AddFromUri(string uri, Meta meta, KeyType keyType)
         {
-            var pair = CreateFromUri(uri, meta, keyType);
+            var pair = CreateFromUri(uri, meta, keyType, Ss58Format);
             AddWallet(pair);
 
             return pair;
@@ -122,7 +122,7 @@ namespace Substrate.NET.Wallet.Keyring
         #endregion
 
         #region Create method
-        private Wallet CreateFromJson(WalletFile walletEncryption)
+        internal static Wallet CreateFromJson(WalletFile walletEncryption, short Ss58Format)
         {
             if (walletEncryption == null) throw new ArgumentNullException(nameof(walletEncryption));
 
@@ -144,7 +144,7 @@ namespace Substrate.NET.Wallet.Keyring
                 walletEncryption.meta, encoded, encryptedEncoding, Ss58Format);
         }
 
-        public Wallet CreateFromUri(string uri, Meta meta, KeyType keyType)
+        internal static Wallet CreateFromUri(string uri, Meta meta, KeyType keyType, short Ss58Format)
         {
             var (extract, seed) = CreateSeedFromUri(uri);
 

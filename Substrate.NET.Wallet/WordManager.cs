@@ -89,7 +89,7 @@ namespace Substrate.NET.Wallet
             WordManager.Create()
             .WithMinimumLength(4)
             .WithMaximumLength(20)
-            .Should().AtLeastOneLowercase();
+            .Should().AtLeastOneLetter();
 
         /// <summary>
         /// Get password default policy
@@ -126,6 +126,11 @@ namespace Substrate.NET.Wallet
             /// </summary>
             protected int? digit = null;
 
+            /// <summary>
+            /// Alphanumeric latter requirement
+            /// </summary>
+            protected int? letter = null;
+
             public IEnumerable<string> GetErrors(string word)
             {
                 var errors = new List<string>();
@@ -150,6 +155,13 @@ namespace Substrate.NET.Wallet
 
                 if (!hasDigit && digit != null && digit.Value > 0)
                     errors.Add($"Digit required");
+
+                var hasLetter = word.Any(char.IsLetter);
+                if (hasLetter && letter != null && letter.Value == 0)
+                    errors.Add($"Letter forbiden");
+
+                if (!hasLetter && letter != null && letter.Value > 0)
+                    errors.Add($"Latter required");
 
                 return errors;
             }
@@ -179,6 +191,12 @@ namespace Substrate.NET.Wallet
                 digit = 1;
                 return wm;
             }
+
+            public WordManager AtLeastOneLetter()
+            {
+                letter = 1;
+                return wm;
+            }
         }
 
         public class ShouldNotManager : ShouldManager {
@@ -203,6 +221,12 @@ namespace Substrate.NET.Wallet
             public WordManager HaveDigit()
             {
                 digit = 0;
+                return wm;
+            }
+
+            public WordManager HaveLetter()
+            {
+                letter = 0;
                 return wm;
             }
         }

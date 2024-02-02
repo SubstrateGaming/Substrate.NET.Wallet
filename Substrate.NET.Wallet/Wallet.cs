@@ -35,7 +35,7 @@ namespace Substrate.NET.Wallet
         public KeyType KeyType { get; internal set; }
         public Meta Meta { get; internal set; }
         public Account Account { get; private set; }
-        public string FileName { get; private set; }
+        public string FileName => Meta?.name != null ? ConcatWalletFileType(Meta.name) : string.Empty;
         public WalletFile FileStore { get; private set; }
 
         /// <summary>
@@ -53,7 +53,6 @@ namespace Substrate.NET.Wallet
             Address = address;
             Encoded = encoded;
             Meta = meta;
-            FileName = meta?.name;
             Account = new Account();
             Account.Create(keyType, privateKey, publicKey);
             EncryptedEncoding = encryptedEncoding;
@@ -63,9 +62,8 @@ namespace Substrate.NET.Wallet
         private Wallet(Account account, string walletName, WalletFile fileStore)
         {
             Account = account;
-            FileName = walletName;
+            Meta = new Meta() { name = walletName };
             FileStore = fileStore;
-            _isStored = true;
             KeyType = account.KeyType;
         }
 
@@ -84,8 +82,7 @@ namespace Substrate.NET.Wallet
         /// <value>
         ///   <c>true</c> if this instance is created; otherwise, <c>false</c>.
         /// </value>
-        public bool IsStored => _isStored;
-        private bool _isStored = false;
+        public bool IsStored => FileName != null && Caching.TryReadFile(FileName, out WalletFile _);
 
         /// <summary>
         /// Unlocks the account
@@ -162,6 +159,8 @@ namespace Substrate.NET.Wallet
                 genesisHash = string.Empty
             };
 
+            this.Meta = generatedMeta;
+
             return Pair.ToJsonPair(KeyType, Address, generatedMeta, Encoded, !string.IsNullOrEmpty(password));
         }
 
@@ -199,11 +198,7 @@ namespace Substrate.NET.Wallet
         /// <returns></returns>
         public void Save(string walletName, string password)
         {
-            if (string.IsNullOrEmpty(Meta.name)) 
-                throw new InvalidOperationException($"No wallet name has been specified. Please update {nameof(Meta)}.{nameof(Meta.name)} propery with account name");
-
-            Caching.Persist(Wallet.ConcatWalletFileType(Meta.name), ToJson(walletName, password));
-            _isStored = true;
+            Caching.Persist(Wallet.ConcatWalletFileType(walletName), ToWalletFile(walletName, password));
         }
 
         /// <summary>
@@ -235,18 +230,7 @@ namespace Substrate.NET.Wallet
         /// <returns></returns>
         public static bool TryLoad(string walletName, WalletFile fileStore, out Wallet wallet)
         {
-            wallet = null;
-
-            if (!IsValidWalletName(walletName))
-            {
-                Logger.Warning("Wallet name is invalid, please provide a proper wallet name. [A-Za-Z_]{20}.");
-                return false;
-            }
-
-            var newAccount = new Account();
-            newAccount.Create(fileStore.GetKeyType(), Utils.GetPublicKeyFrom(fileStore.address));
-
-            wallet = new Wallet(newAccount, walletName, fileStore);
+            wallet = Keyring.Keyring.CreateFromJson(fileStore, 42);
 
             return true;
         }

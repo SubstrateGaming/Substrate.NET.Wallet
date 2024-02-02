@@ -41,7 +41,7 @@ namespace Substrate.NET.Wallet
         /// <param name="obj">The object.</param>
         public static void Persist<T>(string path, T obj)
         {
-            var objEncrypted = Encrypt(JsonConvert.SerializeObject(obj));
+            var objEncrypted = Encrypt(System.Text.Json.JsonSerializer.Serialize(obj));
             SystemInteraction.Persist(path, objEncrypted);
         }
 
