@@ -100,8 +100,15 @@ namespace Substrate.NET.Wallet
 
             Logger.Information("Unlock wallet.");
 
-            var pair = Pkcs8.Decode(password, !Pair.IsLocked(userEncoded) ? userEncoded : Encoded, EncryptedEncoding);
-            Account = Account.Build(KeyType, pair.SecretKey, pair.PublicKey);
+            try
+            {
+                var pair = Pkcs8.Decode(password, !Pair.IsLocked(userEncoded) ? userEncoded : Encoded, EncryptedEncoding);
+                Account = Account.Build(KeyType, pair.SecretKey, pair.PublicKey);
+            } catch(Exception ex)
+            {
+                Logger.Error($"Unable to unlock : {ex.Message}");
+                return false;
+            }
 
             return true;
         }

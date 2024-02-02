@@ -45,14 +45,14 @@ namespace Substrate.NET.Wallet.Test
 
         [Test]
         [TestCase("json_account1.json")]
-        public void ValidJson_WithInvalidPassword_ShouldThrowException(string json)
+        public void ValidJson_WithInvalidPassword_ShouldReturnFalse(string json)
         {
             var input = readJsonFromFile(json);
 
             var keyring = new Keyring.Keyring();
             var res = keyring.AddFromJson(input);
 
-            Assert.Throws<InvalidOperationException>(() => res.Unlock("SS2"));
+            Assert.IsFalse(res.Unlock("SS2"));
         }
 
         [Test]
