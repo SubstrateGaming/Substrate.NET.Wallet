@@ -127,15 +127,15 @@ namespace Substrate.NET.Wallet.Keyring
         {
             return new WalletFile()
             {
-                address = address,
-                encoded = Convert.ToBase64String(encoded),
-                encoding = new Encoding()
+                Address = address,
+                Encoded = Convert.ToBase64String(encoded),
+                Encoding = new Encoding()
                 {
-                    content = new List<string>() { "pkcs8", keyType.ToString().ToLower() },
-                    type = isEncrypted ? ENCODING.ToList() : ENCODING_NONE.ToList(),
-                    version = ENCODING_VERSION
+                    Content = new List<string>() { "pkcs8", keyType.ToString().ToLower() },
+                    Type = isEncrypted ? ENCODING.ToList() : ENCODING_NONE.ToList(),
+                    Version = ENCODING_VERSION
                 },
-                meta = meta
+                Meta = meta
             };
         }
 

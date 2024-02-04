@@ -125,7 +125,7 @@ namespace Substrate.NET.Wallet.Keyring
         /// <exception cref="InvalidOperationException"></exception>
         public KeyType GetKeyType()
         {
-            switch (encoding.Content[1].ToLowerInvariant())
+            switch (Encoding.Content[1].ToLowerInvariant())
             {
                 case "ed25519":
                     return KeyType.Ed25519;
@@ -133,7 +133,7 @@ namespace Substrate.NET.Wallet.Keyring
                 case "sr25519":
                     return KeyType.Sr25519;
 
-                default: throw new InvalidOperationException($"{encoding.Content[1]} type is not supported");
+                default: throw new InvalidOperationException($"{Encoding.Content[1]} type is not supported");
             }
         }
     }

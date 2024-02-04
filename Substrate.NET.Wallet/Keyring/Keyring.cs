@@ -132,22 +132,22 @@ namespace Substrate.NET.Wallet.Keyring
         {
             if (walletEncryption == null) throw new ArgumentNullException(nameof(walletEncryption));
 
-            if (walletEncryption.encoding.version == 3 && walletEncryption.encoding.content[0] != "pkcs8")
-                throw new InvalidOperationException($"Unable to decode non pkcs8 type, found {walletEncryption.encoding.content[0]} instead");
+            if (walletEncryption.Encoding.Version == 3 && walletEncryption.Encoding.Content[0] != "pkcs8")
+                throw new InvalidOperationException($"Unable to decode non pkcs8 type, found {walletEncryption.Encoding.Content[0]} instead");
 
             KeyType keyType = walletEncryption.GetKeyType();
 
-            List<WalletJson.EncryptedJsonEncoding> encryptedEncoding = walletEncryption.encoding.type.Select(encrypt => WalletJson.EncryptedFromString(encrypt)).ToList();
+            List<WalletJson.EncryptedJsonEncoding> encryptedEncoding = walletEncryption.Encoding.Type.Select(encrypt => WalletJson.EncryptedFromString(encrypt)).ToList();
 
-            var publicKey = Utils.GetPublicKeyFrom(walletEncryption.address);
-            var encoded = walletEncryption.encoded.IsHex() ?
-                Utils.HexToByteArray(walletEncryption.encoded) :
-                Convert.FromBase64String(walletEncryption.encoded);
+            var publicKey = Utils.GetPublicKeyFrom(walletEncryption.Address);
+            var encoded = walletEncryption.Encoded.IsHex() ?
+                Utils.HexToByteArray(walletEncryption.Encoded) :
+                Convert.FromBase64String(walletEncryption.Encoded);
 
             return Pair.CreatePair(
                 new KeyringAddress(keyType),
                 new PairInfo(publicKey, null),
-                walletEncryption.meta, encoded, encryptedEncoding, Ss58Format);
+                walletEncryption.Meta, encoded, encryptedEncoding, Ss58Format);
         }
 
         public Wallet CreateFromUri(string uri, Meta meta, KeyType keyType)

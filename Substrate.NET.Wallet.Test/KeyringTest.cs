@@ -96,7 +96,7 @@ namespace Substrate.NET.Wallet.Test
             }, NetApi.Model.Types.KeyType.Sr25519);
 
             var walletResult = kp.ToWalletFile("walletName", "testPassword1");
-            Assert.That(walletResult.meta.Name, Is.EqualTo("walletName"));
+            Assert.That(walletResult.Meta.Name, Is.EqualTo("walletName"));
             var jsonResult = walletResult.ToJson();
 
             Assert.That(jsonResult, Is.Not.Null);

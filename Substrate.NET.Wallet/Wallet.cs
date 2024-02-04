@@ -279,7 +279,7 @@ namespace Substrate.NET.Wallet
             }
 
             var newAccount = new Account();
-            newAccount.Create(fileStore.GetKeyType(), Utils.GetPublicKeyFrom(fileStore.address));
+            newAccount.Create(fileStore.GetKeyType(), Utils.GetPublicKeyFrom(fileStore.Address));
 
             wallet = new Wallet(newAccount, walletName, fileStore);
 
