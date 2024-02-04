@@ -1,14 +1,6 @@
 ﻿using NUnit.Framework;
-using Substrate.NET.Schnorrkel.Keys;
-using Substrate.NET.Wallet.Keyring;
 using Substrate.NetApi;
 using Substrate.NetApi.Model.Types;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Substrate.NET.Wallet.Test.Keyrings
 {
@@ -72,7 +64,7 @@ namespace Substrate.NET.Wallet.Test.Keyrings
             Assert.That(res.Address, Is.EqualTo(expectedAddress));
 
             var (_, seed) = Keyring.Keyring.CreateSeedFromUri(uri);
-            //Assert.That(seed, Is.EquivalentTo(Utils.HexToByteArray(expectedSeed)));
+            Assert.That(seed, Is.EquivalentTo(Utils.HexToByteArray(expectedSeed)));
         }
     }
 }

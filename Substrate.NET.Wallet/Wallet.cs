@@ -1,4 +1,5 @@
 ﻿using Serilog;
+using Substrate.NET.Schnorrkel;
 using Substrate.NET.Wallet.Extensions;
 using Substrate.NET.Wallet.Keyring;
 using Substrate.NetApi;
@@ -82,7 +83,22 @@ namespace Substrate.NET.Wallet
         /// <value>
         ///   <c>true</c> if this instance is created; otherwise, <c>false</c>.
         /// </value>
-        public bool IsStored => FileName != null && Caching.TryReadFile(FileName, out WalletFile _);
+        public bool IsStored
+        {
+            get
+            {
+                if (FileName == null) return false;
+                try
+                {
+                    return Caching.TryReadFile(FileName, out WalletFile _);
+                } catch(Exception)
+                {
+                    Logger.Warning($"Caching error, please check all {nameof(SystemInteraction)} properties are set");
+                }
+
+                return false;
+            }
+        }
 
         /// <summary>
         /// Unlocks the account

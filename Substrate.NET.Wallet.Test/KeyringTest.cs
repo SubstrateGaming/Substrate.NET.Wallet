@@ -7,6 +7,7 @@ using static Substrate.NetApi.Mnemonic;
 using System.Linq;
 using Substrate.NET.Wallet.Extensions;
 using Substrate.NET.Wallet.Derivation;
+using Substrate.NetApi.Extensions;
 
 namespace Substrate.NET.Wallet.Test
 {
@@ -147,6 +148,22 @@ namespace Substrate.NET.Wallet.Test
         }
 
         [Test]
+        [TestCase(NetApi.Model.Types.KeyType.Ed25519)]
+        [TestCase(NetApi.Model.Types.KeyType.Sr25519)]
+        public void GenerateNewAccount_SignAndVerify(NetApi.Model.Types.KeyType keyType)
+        {
+            var keyring = new Keyring.Keyring();
+
+            var mnemonic = Mnemonic.GenerateMnemonic(MnemonicSize.Words12);
+            var wallet = keyring.AddFromMnemonic(mnemonic, new Meta() { name = "My account name" }, keyType);
+
+            var message = "Hello Polkadot !".ToBytes();
+            var sign = wallet.Sign(message);
+
+            Assert.That(wallet.Verify(sign, message));
+        }
+
+        [Test]
         public void WikiExample_Test()
         {
             // Create a new Keyring, by default ss58 format is 42 (Substrate standard address)
@@ -163,7 +180,7 @@ namespace Substrate.NET.Wallet.Test
             var existingMnemonicAccount = "entire material egg meadow latin bargain dutch coral blood melt acoustic thought";
 
             // Import an account from mnemonic automatically unlock all feature
-            var firstWallet = keyring.AddFromMnemonic(existingMnemonicAccount, new Meta() { name = "My account name"}, NetApi.Model.Types.KeyType.Ed25519);
+            var firstWallet = keyring.AddFromMnemonic(existingMnemonicAccount, new Meta() { name = "My account name"}, NetApi.Model.Types.KeyType.Sr25519);
             firstWallet.PasswordPolicy = passwordLightPolicy;
 
             // firstPair.IsLocked => false

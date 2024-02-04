@@ -1,9 +1,11 @@
+using Microsoft.VisualStudio.TestPlatform.CommunicationUtilities;
 using NUnit.Framework;
 using Substrate.NET.Wallet;
 using Substrate.NET.Wallet.Keyring;
 using Substrate.NetApi;
 using Substrate.NetApi.Extensions;
 using Substrate.NetApi.Model.Types;
+using Substrate.NetApi.Sign;
 using System;
 using System.IO;
 using System.Linq;

@@ -241,8 +241,8 @@ namespace Substrate.NET.Wallet.Keyring
                     var concatenated = miniSecret.GetPair().ToHalfEd25519Bytes();
                     var publicKey = concatenated.SubArray(Keys.SECRET_KEY_LENGTH, Keys.SECRET_KEY_LENGTH + Keys.PUBLIC_KEY_LENGTH);
                     var secretKey = concatenated.SubArray(0, Keys.SECRET_KEY_LENGTH);
-                    
-                    return new PairInfo(publicKey, secretKey);
+
+                    return new PairInfo(miniSecret.ExpandToPublic().Key, miniSecret.ExpandToSecret().ToEd25519Bytes());
 
                 default:
                     throw new NotImplementedException($"KeyType {keyType} isn't implemented!");
