@@ -5,8 +5,6 @@ using Substrate.NetApi.Model.Types;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Security.Cryptography;
-using System.Text;
 
 namespace Substrate.NET.Wallet.Keyring
 {
@@ -26,7 +24,6 @@ namespace Substrate.NET.Wallet.Keyring
     {
         public PairInfo(byte[] publicKey) : this(publicKey, null)
         {
-
         }
 
         public PairInfo(byte[] publicKey, byte[] secretKey)
@@ -57,6 +54,7 @@ namespace Substrate.NET.Wallet.Keyring
 
         public const int ENCODING_VERSION = 3;
         public static readonly string[] ENCODING_NONE = { WalletJson.EncryptedToString(WalletJson.EncryptedJsonEncoding.None) };
+
         public static readonly string[] ENCODING = {
             WalletJson.EncryptedToString(WalletJson.EncryptedJsonEncoding.Scrypt),
             WalletJson.EncryptedToString(WalletJson.EncryptedJsonEncoding.Xsalsa20Poly1305),
@@ -129,15 +127,15 @@ namespace Substrate.NET.Wallet.Keyring
         {
             return new WalletFile()
             {
-                address = address,
-                encoded = Convert.ToBase64String(encoded),
-                encoding = new Encoding()
+                Address = address,
+                Encoded = Convert.ToBase64String(encoded),
+                Encoding = new Encoding()
                 {
-                    content = new List<string>() { "pkcs8", keyType.ToString().ToLower() },
-                    type = isEncrypted ? ENCODING.ToList() : ENCODING_NONE.ToList(),
-                    version = ENCODING_VERSION
+                    Content = new List<string>() { "pkcs8", keyType.ToString().ToLower() },
+                    Type = isEncrypted ? ENCODING.ToList() : ENCODING_NONE.ToList(),
+                    Version = ENCODING_VERSION
                 },
-                meta = meta
+                Meta = meta
             };
         }
 

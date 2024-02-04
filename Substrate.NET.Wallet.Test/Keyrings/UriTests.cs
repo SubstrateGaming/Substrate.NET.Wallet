@@ -1,8 +1,7 @@
-﻿using System;
-using System.Globalization;
-using System.Linq;
-using NUnit.Framework;
+﻿using NUnit.Framework;
 using Substrate.NetApi;
+using System;
+using System.Linq;
 using Uri = Substrate.NET.Wallet.Keyring.Uri;
 
 namespace Substrate.NET.Wallet.Test.Keyrings
@@ -16,7 +15,6 @@ namespace Substrate.NET.Wallet.Test.Keyrings
         public void CompactAddLenght_ShouldAddLengthPrefix()
         {
             var input = new byte[] { 12, 13 };
-
         }
 
         [Test]
@@ -60,7 +58,7 @@ namespace Substrate.NET.Wallet.Test.Keyrings
             Assert.That(res.Phrase, Is.EqualTo("hello world"));
             Assert.That(res.Path.Count, Is.EqualTo(1));
             Assert.That(res.Path[0].IsHard, Is.EqualTo(isHard));
-            
+
             Assert.That(res.Path[0].ChainCode, Is.EqualTo(HelloWorldDotBytes));
         }
 
@@ -72,7 +70,7 @@ namespace Substrate.NET.Wallet.Test.Keyrings
             Assert.That(res.Password, Is.Null);
             Assert.That(res.Phrase, Is.EqualTo("hello world"));
             Assert.That(res.Path.Count, Is.EqualTo(2));
-            
+
             Assert.That(res.Path[0].IsHard, Is.True);
             Assert.That(res.Path[0].ChainCode, Is.EqualTo(HelloWorldBytes));
 

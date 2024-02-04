@@ -7,13 +7,8 @@ using Substrate.NetApi;
 using Substrate.NetApi.Extensions;
 using Substrate.NetApi.Model.Types;
 using Substrate.NetApi.Sign;
-using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
-using System.Security.Cryptography.X509Certificates;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Substrate.NET.Wallet.Test.Keyrings
 {
@@ -28,7 +23,8 @@ namespace Substrate.NET.Wallet.Test.Keyrings
             Utils.HexToByteArray("0x44a996beb1eef7bdcab976ab6d2ca26104834164ecf28fb375600576fcc6eb0f"),
             Utils.HexToByteArray("0x9d61b19deffd5a60ba844af492ec2cc44449c5697b326919703bac031cae7f60")
         );
-        Substrate.NET.Wallet.Keyring.Keyring keyring { get; set; }
+
+        private Substrate.NET.Wallet.Keyring.Keyring keyring { get; set; }
 
         [SetUp]
         public void Setup()
@@ -77,13 +73,13 @@ namespace Substrate.NET.Wallet.Test.Keyrings
 
             var (_, seed) = Keyring.Keyring.CreateSeedFromUri("//Alice");
 
-            /* 
+            /*
              * Build an account with ExpandToSecret().ToBytes() => concatenate secret + nonce
              */
             var miniSecret_simple = new Schnorrkel.Keys.MiniSecret(seed, Schnorrkel.Keys.ExpandMode.Ed25519);
             var account_simple = Account.Build(KeyType.Sr25519, miniSecret_simple.ExpandToSecret().ToBytes(), miniSecret_simple.ExpandToPublic().Key);
 
-            /* 
+            /*
              * Build an account with ExpandToSecret().ToHalfEd25519Bytes() => concatenate secret with MultiplyScalarBytesByCofactor + nonce
              */
             var miniSecret_Ed25519Bytes = new Schnorrkel.Keys.MiniSecret(seed, Schnorrkel.Keys.ExpandMode.Ed25519);
@@ -127,7 +123,7 @@ namespace Substrate.NET.Wallet.Test.Keyrings
              * But all signatures should be verified, no matter the account
              * If we sign with SignSimple we could be able to verify with Verify
              * If we sign with SignSimpleEd25519 we could be able to verify with VerifyEd25519
-             * 
+             *
              * I do it multiple time to ensure the signature is not modify by the verify function
              */
             Assert.That(Sr25519v091.Verify(signature_simple_1, account_simple.Bytes, message.ToBytes()), Is.True);

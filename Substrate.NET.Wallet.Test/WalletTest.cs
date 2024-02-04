@@ -30,13 +30,13 @@ namespace Substrate.NET.Wallet.Test
         [Test]
         public void IsValidPasswordTest()
         {
-            Assert.False(Wallet.IsValidPassword("12345678"));
-            Assert.False(Wallet.IsValidPassword("ABCDEFGH"));
-            Assert.False(Wallet.IsValidPassword("abcdefgh"));
-            Assert.False(Wallet.IsValidPassword("ABCDefgh"));
-            
-            Assert.True(Wallet.IsValidPassword("1BCDefg"));
-            Assert.True(Wallet.IsValidPassword("ABCDefg1"));
+            Assert.That(Wallet.IsValidPassword("12345678"), Is.False);
+            Assert.That(Wallet.IsValidPassword("ABCDEFGH"), Is.False);
+            Assert.That(Wallet.IsValidPassword("abcdefgh"), Is.False);
+            Assert.That(Wallet.IsValidPassword("ABCDefgh"), Is.False);
+
+            Assert.That(Wallet.IsValidPassword("1BCDefg"), Is.True);
+            Assert.That(Wallet.IsValidPassword("ABCDefg1"), Is.True);
         }
 
         [Test]
@@ -45,8 +45,45 @@ namespace Substrate.NET.Wallet.Test
             Assert.False(Wallet.IsValidWalletName("123"));
             Assert.True(Wallet.IsValidWalletName("ABC_/"));
             Assert.False(Wallet.IsValidWalletName("1111111"));
+            Assert.That(Wallet.IsValidWalletName("1234"), Is.False);
+            Assert.That(Wallet.IsValidWalletName("ABC_/"), Is.False);
+            Assert.That(Wallet.IsValidWalletName("1111111"), Is.False);
 
-            Assert.True(Wallet.IsValidWalletName("wal_let"));
+            Assert.That(Wallet.IsValidWalletName("wal_let"), Is.True);
+        }
+
+        [Test]
+        [TestCase("ApolixitWalletTest", "MyAwesomePassword1")]
+        public void CreateWallet_SaveIt_ThenTryLoad_ShouldSuceed(string walletName, string walletPassword)
+        {
+            var keyring = new Keyring.Keyring();
+
+            // Create a new random wallet
+            var wallet = keyring.AddFromMnemonic(
+                Mnemonic.GenerateMnemonic(MnemonicSize.Words12), 
+                new Meta(), 
+                KeyType.Sr25519);
+
+            //Load from mnemonic should get wallet unlocked, but ofc, not saved
+            Assert.IsTrue(wallet.IsUnlocked);
+            Assert.IsFalse(wallet.IsStored);
+
+            wallet.Save(walletName, walletPassword);
+            Assert.IsTrue(wallet.IsStored);
+
+            // Now let's try load
+            Assert.IsTrue(Wallet.TryLoad(walletName, out Wallet loadedWallet));
+
+            Assert.IsTrue(loadedWallet.IsStored);
+
+            // Wallet is load, but locked
+            Assert.IsFalse(loadedWallet.IsUnlocked);
+
+            loadedWallet.Unlock(walletPassword);
+            Assert.IsTrue(loadedWallet.IsUnlocked);
+
+            Assert.That(loadedWallet.Account.Bytes, Is.EqualTo(wallet.Account.Bytes));
+            Assert.That(loadedWallet.Account.PrivateKey, Is.EqualTo(wallet.Account.PrivateKey));
         }
 
         [Test]

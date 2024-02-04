@@ -10,6 +10,7 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 
 [assembly: InternalsVisibleTo("Substrate.NET.Wallet.Test")]
+
 namespace Substrate.NET.Wallet.Keyring
 {
     public class KeyringAddress
@@ -17,7 +18,8 @@ namespace Substrate.NET.Wallet.Keyring
         public KeyType KeyType { get; set; }
         public Func<byte[], short, string> ToSS58 { get; set; }
 
-        public KeyringAddress(KeyType keyType) {
+        public KeyringAddress(KeyType keyType)
+        {
             KeyType = keyType;
             ToSS58 = Utils.GetAddressFrom;
         }
@@ -53,6 +55,7 @@ namespace Substrate.NET.Wallet.Keyring
         }
 
         #region Get methods
+
         public IList<byte[]> GetPublicKeys()
         {
             return Wallets.Select(x => x.Account.Bytes).ToList();
@@ -62,7 +65,8 @@ namespace Substrate.NET.Wallet.Keyring
         {
             return Wallets.FirstOrDefault(x => x.Account.Bytes.SequenceEqual(publicKey));
         }
-        #endregion
+
+        #endregion Get methods
 
         #region Add methods
 
@@ -119,29 +123,30 @@ namespace Substrate.NET.Wallet.Keyring
 
             return pair;
         }
-        #endregion
+
+        #endregion Add methods
 
         #region Create method
         internal static Wallet CreateFromJson(WalletFile walletEncryption, short Ss58Format)
         {
             if (walletEncryption == null) throw new ArgumentNullException(nameof(walletEncryption));
 
-            if (walletEncryption.encoding.version == 3 && walletEncryption.encoding.content[0] != "pkcs8")
-                throw new InvalidOperationException($"Unable to decode non pkcs8 type, found {walletEncryption.encoding.content[0]} instead");
+            if (walletEncryption.Encoding.Version == 3 && walletEncryption.Encoding.Content[0] != "pkcs8")
+                throw new InvalidOperationException($"Unable to decode non pkcs8 type, found {walletEncryption.Encoding.Content[0]} instead");
 
             KeyType keyType = walletEncryption.GetKeyType();
 
-            List<WalletJson.EncryptedJsonEncoding> encryptedEncoding = walletEncryption.encoding.type.Select(encrypt => WalletJson.EncryptedFromString(encrypt)).ToList();
+            List<WalletJson.EncryptedJsonEncoding> encryptedEncoding = walletEncryption.Encoding.Type.Select(encrypt => WalletJson.EncryptedFromString(encrypt)).ToList();
 
-            var publicKey = Utils.GetPublicKeyFrom(walletEncryption.address);
-            var encoded = walletEncryption.encoded.IsHex() ?
-                Utils.HexToByteArray(walletEncryption.encoded) :
-                Convert.FromBase64String(walletEncryption.encoded);
+            var publicKey = Utils.GetPublicKeyFrom(walletEncryption.Address);
+            var encoded = walletEncryption.Encoded.IsHex() ?
+                Utils.HexToByteArray(walletEncryption.Encoded) :
+                Convert.FromBase64String(walletEncryption.Encoded);
 
             return Pair.CreatePair(
                 new KeyringAddress(keyType),
                 new PairInfo(publicKey, null),
-                walletEncryption.meta, encoded, encryptedEncoding, Ss58Format);
+                walletEncryption.Meta, encoded, encryptedEncoding, Ss58Format);
         }
 
         internal static Wallet CreateFromUri(string uri, Meta meta, KeyType keyType, short Ss58Format)
@@ -191,9 +196,11 @@ namespace Substrate.NET.Wallet.Keyring
 
             return (extract, seed);
         }
-        #endregion
+
+        #endregion Create method
 
         #region Utility methods
+
         public static byte[] JsonDecryptData(string password, byte[] encrypted, List<WalletJson.EncryptedJsonEncoding> encryptedEncoding)
         {
             ensureDataIsSet(encrypted);
@@ -216,7 +223,6 @@ namespace Substrate.NET.Wallet.Keyring
                     encrypted.Skip(NONCE_LENGTH).ToArray(),
                     passwordBytes.BytesFixLength(256, true),
                     encrypted.Take(NONCE_LENGTH).ToArray());
-
             }
 
             if (encoded is null || !encoded.Any())
@@ -234,7 +240,7 @@ namespace Substrate.NET.Wallet.Keyring
             {
                 case KeyType.Ed25519:
                     Chaos.NaCl.Ed25519.KeyPairFromSeed(out byte[] pubKey, out byte[] priKey, seed);
-                    return new PairInfo(pubKey ,priKey);
+                    return new PairInfo(pubKey, priKey);
 
                 case KeyType.Sr25519:
                     var miniSecret = new MiniSecret(seed, ExpandMode.Ed25519);
@@ -260,11 +266,11 @@ namespace Substrate.NET.Wallet.Keyring
 
             // Mnemonic size should be equal to 12, 15, 18, 21 or 24 words
             if (
-                new byte[5] { 12, 15, 18, 21, 24 }.Any(l => l == words.Length) && 
+                new byte[5] { 12, 15, 18, 21, 24 }.Any(l => l == words.Length) &&
                 words.All(p => p.Length > 2) &&
                 Mnemonic.ValidateMnemonic(mnemonic, language))
             {
-                    return true;
+                return true;
             }
 
             return false;
@@ -275,6 +281,7 @@ namespace Substrate.NET.Wallet.Keyring
             if (data is null || !data.Any())
                 throw new ArgumentException(string.IsNullOrEmpty(message) ? "No data available" : message);
         }
-        #endregion
+
+        #endregion Utility methods
     }
 }

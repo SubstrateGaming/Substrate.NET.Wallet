@@ -1,12 +1,7 @@
-﻿using Substrate.NET.Schnorrkel.Keys;
-using Substrate.NET.Wallet.Keyring;
+﻿using Substrate.NET.Wallet.Keyring;
 using Substrate.NetApi;
 using Substrate.NetApi.Model.Types;
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Substrate.NET.Wallet.Test
 {
@@ -14,6 +9,7 @@ namespace Substrate.NET.Wallet.Test
     {
         protected Dictionary<string, PairDefTest> pairDefs;
         protected WordManager passwordLightPolicy;
+
         protected MainTests()
         {
             passwordLightPolicy = WordManager.Create().WithMinimumLength(2);
@@ -41,7 +37,7 @@ namespace Substrate.NET.Wallet.Test
                         SecretKey = "0x081ff694633e255136bdb456c20a5fc8fed21f8b964c11bb17ff534ce80ebd5941ae88f85d0c1bfc37be41c904e1dfc01de8c8067b0d6d5df25dd1ac0894a325",
                         Seed = "Bob",
                         KeyType = KeyType.Sr25519
-                    }   
+                    }
                 },
                 { "Bob stash", new PairDefTest()
                     {
@@ -56,10 +52,10 @@ namespace Substrate.NET.Wallet.Test
 
         protected Meta defaultMeta = new Meta()
         {
-            genesisHash = "0x91b171bb158e2d3848fa23a9f1c25182fb8e20313b2c1eb49219da7a70ce90c3",
-            isHardware = false,
-            name = "SubstrateAccount2",
-            tags = null
+            GenesisHash = "0x91b171bb158e2d3848fa23a9f1c25182fb8e20313b2c1eb49219da7a70ce90c3",
+            IsHardware = false,
+            Name = "SubstrateAccount2",
+            Tags = null
         };
 
         public class PairDefTest

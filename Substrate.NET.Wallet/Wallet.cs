@@ -9,12 +9,12 @@ using Substrate.NetApi.Sign;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
 
 namespace Substrate.NET.Wallet
 {
     /// <summary>
     /// Basic Wallet implementation
-    /// TODO: Make sure that a live runtime change is handled correctly.
     /// </summary>
     public class Wallet
     {
@@ -32,6 +32,7 @@ namespace Substrate.NET.Wallet
         /// Encoded value in JSON file
         /// </summary>
         public byte[] Encoded { get; internal set; }
+
         public List<WalletJson.EncryptedJsonEncoding> EncryptedEncoding { get; internal set; }
         public KeyType KeyType { get; internal set; }
         public Meta Meta { get; internal set; }
@@ -49,6 +50,16 @@ namespace Substrate.NET.Wallet
         /// </summary>
         public WordManager PasswordPolicy { get; set; } = WordManager.StandardPassword;
 
+        /// <summary>
+        /// Initializes a new instance of the wallet.
+        /// </summary>
+        /// <param name="address"></param>
+        /// <param name="encoded"></param>
+        /// <param name="meta"></param>
+        /// <param name="publicKey"></param>
+        /// <param name="privateKey"></param>
+        /// <param name="keyType"></param>
+        /// <param name="encryptedEncoding"></param>
         public Wallet(string address, byte[] encoded, Meta meta, byte[] publicKey, byte[] privateKey, KeyType keyType, List<WalletJson.EncryptedJsonEncoding> encryptedEncoding)
         {
             Address = address;
@@ -60,6 +71,12 @@ namespace Substrate.NET.Wallet
             KeyType = keyType;
         }
 
+        /// <summary>
+        /// Initializes a new instance of the wallet.
+        /// </summary>
+        /// <param name="account"></param>
+        /// <param name="walletName"></param>
+        /// <param name="fileStore"></param>
         private Wallet(Account account, string walletName, WalletFile fileStore)
         {
             Account = account;
@@ -75,6 +92,7 @@ namespace Substrate.NET.Wallet
         ///   <c>true</c> if this instance is unlocked; otherwise, <c>false</c>.
         /// </value>
         public bool IsUnlocked => Account != null && !Pair.IsLocked(Account.PrivateKey);
+
         public bool IsLocked => !IsUnlocked;
 
         /// <summary>
@@ -156,6 +174,13 @@ namespace Substrate.NET.Wallet
             return true;
         }
 
+        /// <summary>
+        /// Transform to wallet file.
+        /// </summary>
+        /// <param name="walletName"></param>
+        /// <param name="password"></param>
+        /// <returns></returns>
+        /// <exception cref="InvalidOperationException"></exception>
         public WalletFile ToWalletFile(string walletName, string password)
         {
             if (!IsUnlocked)
@@ -175,11 +200,11 @@ namespace Substrate.NET.Wallet
 
             var generatedMeta = new Meta()
             {
-                isHardware = false,
-                tags = new List<object>(),
-                whenCreated = DateTime.Now.Ticks,
-                name = walletName,
-                genesisHash = string.Empty
+                IsHardware = false,
+                Tags = new List<object>(),
+                WhenCreated = DateTime.Now.Ticks,
+                Name = walletName,
+                GenesisHash = string.Empty
             };
 
             this.Meta = generatedMeta;
@@ -187,17 +212,42 @@ namespace Substrate.NET.Wallet
             return Pair.ToJsonPair(KeyType, Address, generatedMeta, Encoded, !string.IsNullOrEmpty(password));
         }
 
+        /// <summary>
+        /// To the json.
+        /// </summary>
+        /// <param name="walletName"></param>
+        /// <param name="password"></param>
+        /// <returns></returns>
         public string ToJson(string walletName, string password)
         {
-            return System.Text.Json.JsonSerializer.Serialize(ToWalletFile(walletName, password));
+            return JsonSerializer.Serialize(ToWalletFile(walletName, password));
         }
 
+        /// <summary>
+        /// Recode the account
+        /// </summary>
+        /// <param name="password"></param>
+        /// <returns></returns>
         public byte[] Recode(string password)
         {
             return Pair.EncodePair(password, Account.ToPair());
         }
 
+        /// <summary>
+        /// Derive a new account from the current account
+        /// </summary>
+        /// <param name="sUri"></param>
+        /// <returns></returns>
         public Wallet Derive(string sUri) => Derive(sUri, null);
+
+        /// <summary>
+        /// Derive a new account from the current account
+        /// </summary>
+        /// <param name="sUri"></param>
+        /// <param name="meta"></param>
+        /// <returns></returns>
+        /// <exception cref="InvalidCastException"></exception>
+        /// <exception cref="InvalidOperationException"></exception>
         public Wallet Derive(string sUri, Meta meta)
         {
             if (!IsUnlocked)
@@ -205,7 +255,7 @@ namespace Substrate.NET.Wallet
 
             var res = Keyring.Uri.KeyExtractPath(sUri);
 
-            if(KeyType == KeyType.Ed25519 && res.Path.Any(x => x.IsSoft))
+            if (KeyType == KeyType.Ed25519 && res.Path.Any(x => x.IsSoft))
             {
                 throw new InvalidOperationException($"Soft derivation paths are not allowed on {KeyType}");
             }
@@ -258,17 +308,28 @@ namespace Substrate.NET.Wallet
             return true;
         }
 
-
         #region Sign
 
+        /// <summary>
+        /// Sign the message
+        /// </summary>
+        /// <param name="message"></param>
+        /// <param name="wrap"></param>
+        /// <returns></returns>
         public byte[] Sign(string message, bool wrap = true)
                 => Sign(message.ToBytes(), wrap);
 
+        /// <summary>
+        /// Sign the message
+        /// </summary>
+        /// <param name="message"></param>
+        /// <param name="wrap"></param>
+        /// <returns></returns>
+        /// <exception cref="InvalidOperationException"></exception>
         public byte[] Sign(byte[] message, bool wrap = true)
         {
             if (!IsUnlocked)
                 throw new InvalidOperationException("Cannot sign a message on a locked account");
-
 
             if (wrap && !WrapMessage.IsWrapped(message))
             {
@@ -304,13 +365,29 @@ namespace Substrate.NET.Wallet
             signature = signer.Sign(message);
             return true;
         }
-        #endregion
+
+        #endregion Sign
 
         #region Verify
 
+        /// <summary>
+        /// Verify the message
+        /// </summary>
+        /// <param name="signature"></param>
+        /// <param name="message"></param>
+        /// <param name="wrap"></param>
+        /// <returns></returns>
         public bool Verify(byte[] signature, string message, bool wrap = true)
             => Verify(signature, message.ToBytes(), wrap);
 
+        /// <summary>
+        /// Verify the message
+        /// </summary>
+        /// <param name="signature"></param>
+        /// <param name="message"></param>
+        /// <param name="wrap"></param>
+        /// <returns></returns>
+        /// <exception cref="InvalidOperationException"></exception>
         public bool Verify(byte[] signature, byte[] message, bool wrap = true)
         {
             if (!IsUnlocked)
@@ -324,13 +401,15 @@ namespace Substrate.NET.Wallet
             try
             {
                 return Account.Verify(signature, message);
-            } catch(Exception ex)
+            }
+            catch (Exception ex)
             {
                 Logger.Warning(ex.Message);
                 return false;
             }
         }
-        #endregion
+
+        #endregion Verify
 
         /// <summary>
         /// Determines whether [is valid wallet name] [the specified wallet name].
@@ -339,7 +418,7 @@ namespace Substrate.NET.Wallet
         /// <returns>
         ///   <c>true</c> if [is valid wallet name] [the specified wallet name]; otherwise, <c>false</c>.
         /// </returns>
-        public static bool IsValidWalletName(string walletName) 
+        public static bool IsValidWalletName(string walletName)
             => WordManager.StandardAccountName.IsValid(walletName);
 
         /// <summary>

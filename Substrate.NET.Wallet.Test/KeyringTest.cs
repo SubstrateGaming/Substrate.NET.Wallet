@@ -1,9 +1,9 @@
 ﻿using NUnit.Framework;
-using System;
-using System.IO;
+using Substrate.NET.Wallet.Derivation;
 using Substrate.NET.Wallet.Keyring;
 using Substrate.NetApi;
-using static Substrate.NetApi.Mnemonic;
+using System;
+using System.IO;
 using System.Linq;
 using Substrate.NET.Wallet.Extensions;
 using Substrate.NET.Wallet.Derivation;
@@ -17,8 +17,6 @@ namespace Substrate.NET.Wallet.Test
         {
             return File.ReadAllText($"{AppContext.BaseDirectory}/Data/{jsonFile}");
         }
-
-        
 
         [Test]
         [TestCase("json_alice.json", "alicealice")]
@@ -94,14 +92,14 @@ namespace Substrate.NET.Wallet.Test
             var keyring = new Keyring.Keyring();
             var kp = keyring.AddFromMnemonic(Mnemonic.GenerateMnemonic(Mnemonic.MnemonicSize.Words12), new Meta()
             {
-                genesisHash = "0x91b171bb158e2d3848fa23a9f1c25182fb8e20313b2c1eb49219da7a70ce90c3",
-                isHardware = false,
-                name = "SubstrateAccount",
-                tags = null
+                GenesisHash = "0x91b171bb158e2d3848fa23a9f1c25182fb8e20313b2c1eb49219da7a70ce90c3",
+                IsHardware = false,
+                Name = "SubstrateAccount",
+                Tags = null
             }, NetApi.Model.Types.KeyType.Sr25519);
 
             var walletResult = kp.ToWalletFile("walletName", "testPassword1");
-            Assert.That(walletResult.meta.name, Is.EqualTo("walletName"));
+            Assert.That(walletResult.Meta.Name, Is.EqualTo("walletName"));
             var jsonResult = walletResult.ToJson();
 
             Assert.That(jsonResult, Is.Not.Null);
@@ -173,7 +171,7 @@ namespace Substrate.NET.Wallet.Test
             keyring.Ss58Format = 0; // Polkadot
 
             // Generate a new mnemonic for a new account
-            var newMnemonic = Mnemonic.GenerateMnemonic(MnemonicSize.Words12);
+            var newMnemonic = Mnemonic.GenerateMnemonic(Mnemonic.MnemonicSize.Words12);
             Assert.That(newMnemonic.Count(), Is.EqualTo(12));
 
             // Use an existing mnemonic
@@ -214,7 +212,7 @@ namespace Substrate.NET.Wallet.Test
             var keyPair = Keyring.Keyring.KeyPairFromSeed(NetApi.Model.Types.KeyType.Sr25519, seed);
             Assert.That(keyPair.PublicKey.Length, Is.EqualTo(Keys.PUBLIC_KEY_LENGTH));
             Assert.That(keyPair.SecretKey.Length, Is.EqualTo(Keys.SECRET_KEY_LENGTH));
-            
+
             Assert.That(keyPair.PublicKey, Is.EqualTo(expected));
         }
 

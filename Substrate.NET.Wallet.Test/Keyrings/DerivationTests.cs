@@ -39,7 +39,7 @@ namespace Substrate.NET.Wallet.Test.Keyrings
             keyring.Ss58Format = ss58;
 
             var res = keyring.AddFromUri(derivation, defaultMeta, KeyType.Sr25519);
-            
+
             Assert.That(res.Address, Is.EqualTo(address));
         }
 
