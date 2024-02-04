@@ -37,7 +37,7 @@ namespace Substrate.NET.Wallet
         public KeyType KeyType { get; internal set; }
         public Meta Meta { get; internal set; }
         public Account Account { get; private set; }
-        public string FileName => Meta?.name != null ? ConcatWalletFileType(Meta.name) : string.Empty;
+        public string FileName => Meta?.Name != null ? ConcatWalletFileType(Meta.Name) : string.Empty;
         public WalletFile FileStore { get; private set; }
 
         /// <summary>
@@ -60,7 +60,7 @@ namespace Substrate.NET.Wallet
         /// <param name="privateKey"></param>
         /// <param name="keyType"></param>
         /// <param name="encryptedEncoding"></param>
-        public Wallet(string address, byte[] encoded, Meta meta, byte[] publicKey, byte[] privateKey, KeyType keyType, List<WalletJson.EncryptedJsonEncoding> encryptedEncoding)
+        internal Wallet(string address, byte[] encoded, Meta meta, byte[] publicKey, byte[] privateKey, KeyType keyType, List<WalletJson.EncryptedJsonEncoding> encryptedEncoding)
         {
             Address = address;
             Encoded = encoded;
@@ -69,20 +69,6 @@ namespace Substrate.NET.Wallet
             Account.Create(keyType, privateKey, publicKey);
             EncryptedEncoding = encryptedEncoding;
             KeyType = keyType;
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the wallet.
-        /// </summary>
-        /// <param name="account"></param>
-        /// <param name="walletName"></param>
-        /// <param name="fileStore"></param>
-        private Wallet(Account account, string walletName, WalletFile fileStore)
-        {
-            Account = account;
-            Meta = new Meta() { name = walletName };
-            FileStore = fileStore;
-            KeyType = account.KeyType;
         }
 
         /// <summary>

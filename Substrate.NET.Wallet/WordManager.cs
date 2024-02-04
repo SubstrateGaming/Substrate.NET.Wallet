@@ -171,11 +171,6 @@ namespace Substrate.NET.Wallet
             protected int? letter = null;
 
             /// <summary>
-            /// Alphanumeric latter requirement
-            /// </summary>
-            protected int? letter = null;
-
-            /// <summary>
             /// Get errors
             /// </summary>
             /// <param name="word"></param>
@@ -258,6 +253,16 @@ namespace Substrate.NET.Wallet
                 digit = 1;
                 return wm;
             }
+
+            /// <summary>
+            /// At least one digit
+            /// </summary>
+            /// <returns></returns>
+            public WordManager AtLeastOneLetter()
+            {
+                letter = 1;
+                return wm;
+            }
         }
 
         /// <summary>
@@ -303,6 +308,10 @@ namespace Substrate.NET.Wallet
                 return wm;
             }
 
+            /// <summary>
+            /// Have letter
+            /// </summary>
+            /// <returns></returns>
             public WordManager HaveLetter()
             {
                 letter = 0;

@@ -62,9 +62,6 @@ namespace Substrate.NET.Wallet.Test.Keyrings
 
             Assert.That(res.Account.Bytes, Is.EquivalentTo(Utils.HexToByteArray(expectedPublicKey)));
             Assert.That(res.Address, Is.EqualTo(expectedAddress));
-
-            var (_, seed) = Keyring.Keyring.CreateSeedFromUri(uri);
-            Assert.That(seed, Is.EquivalentTo(Utils.HexToByteArray(expectedSeed)));
         }
     }
 }

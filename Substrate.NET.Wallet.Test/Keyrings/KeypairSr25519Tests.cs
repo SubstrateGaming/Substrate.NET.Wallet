@@ -161,12 +161,12 @@ namespace Substrate.NET.Wallet.Test.Keyrings
             message = WrapMessage.Wrap(message);
 
             var sign = aliceWallet.Sign(message);
-            Assert.IsTrue(aliceWallet.Verify(sign, message));
+            Assert.That(aliceWallet.Verify(sign, message), Is.True);
 
             var polkadotJsSignature = Utils.HexToByteArray("0xd8b5894fc138ded2c7311602da5dc86521b280d5489f2f64421e222c6034727a9dc49759b6d3061405e3221b411b521397a818caddbdbc80fba4bebdc88a108d");
 
-            Assert.IsTrue(Schnorrkel.Sr25519v091.Verify(polkadotJsSignature, aliceWallet.Account.Bytes, message));
-            Assert.IsTrue(aliceWallet.Verify(polkadotJsSignature, message));
+            Assert.That(Schnorrkel.Sr25519v091.Verify(polkadotJsSignature, aliceWallet.Account.Bytes, message), Is.True);
+            Assert.That(aliceWallet.Verify(polkadotJsSignature, message), Is.True);
         }
     }
 }
