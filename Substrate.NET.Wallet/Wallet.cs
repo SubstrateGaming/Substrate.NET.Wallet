@@ -49,6 +49,16 @@ namespace Substrate.NET.Wallet
         /// </summary>
         public WordManager PasswordPolicy { get; set; } = WordManager.StandardPassword;
 
+        /// <summary>
+        /// Initializes a new instance of the wallet.
+        /// </summary>
+        /// <param name="address"></param>
+        /// <param name="encoded"></param>
+        /// <param name="meta"></param>
+        /// <param name="publicKey"></param>
+        /// <param name="privateKey"></param>
+        /// <param name="keyType"></param>
+        /// <param name="encryptedEncoding"></param>
         public Wallet(string address, byte[] encoded, Meta meta, byte[] publicKey, byte[] privateKey, KeyType keyType, List<WalletJson.EncryptedJsonEncoding> encryptedEncoding)
         {
             Address = address;
@@ -61,6 +71,12 @@ namespace Substrate.NET.Wallet
             KeyType = keyType;
         }
 
+        /// <summary>
+        /// Initializes a new instance of the wallet.
+        /// </summary>
+        /// <param name="account"></param>
+        /// <param name="walletName"></param>
+        /// <param name="fileStore"></param>
         private Wallet(Account account, string walletName, WalletFile fileStore)
         {
             Account = account;

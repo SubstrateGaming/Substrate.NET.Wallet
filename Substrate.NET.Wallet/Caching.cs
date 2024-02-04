@@ -4,6 +4,9 @@ using System.Text.Json;
 
 namespace Substrate.NET.Wallet
 {
+    /// <summary>
+    /// Caching
+    /// </summary>
     public static class Caching
     {
         /// <summary> The logger. </summary>
