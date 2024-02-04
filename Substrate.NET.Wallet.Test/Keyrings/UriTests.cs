@@ -1,7 +1,7 @@
-﻿using System;
-using System.Globalization;
+﻿using NUnit.Framework;
+using Substrate.NetApi;
+using System;
 using System.Linq;
-using NUnit.Framework;
 using Uri = Substrate.NET.Wallet.Keyring.Uri;
 
 namespace Substrate.NET.Wallet.Test.Keyrings
@@ -15,7 +15,6 @@ namespace Substrate.NET.Wallet.Test.Keyrings
         public void CompactAddLenght_ShouldAddLengthPrefix()
         {
             var input = new byte[] { 12, 13 };
-
         }
 
         [Test]
@@ -59,7 +58,7 @@ namespace Substrate.NET.Wallet.Test.Keyrings
             Assert.That(res.Phrase, Is.EqualTo("hello world"));
             Assert.That(res.Path.Count, Is.EqualTo(1));
             Assert.That(res.Path[0].IsHard, Is.EqualTo(isHard));
-            
+
             Assert.That(res.Path[0].ChainCode, Is.EqualTo(HelloWorldDotBytes));
         }
 
@@ -71,7 +70,7 @@ namespace Substrate.NET.Wallet.Test.Keyrings
             Assert.That(res.Password, Is.Null);
             Assert.That(res.Phrase, Is.EqualTo("hello world"));
             Assert.That(res.Path.Count, Is.EqualTo(2));
-            
+
             Assert.That(res.Path[0].IsHard, Is.True);
             Assert.That(res.Path[0].ChainCode, Is.EqualTo(HelloWorldBytes));
 
@@ -95,6 +94,7 @@ namespace Substrate.NET.Wallet.Test.Keyrings
             Assert.That(res.Path[1].ChainCode, Is.EqualTo(HelloWorldBytes));
         }
 
+        [Test]
         public void KeyExtractUri_DeriveMultiple_3()
         {
             var res = Uri.KeyExtractUri("hello world//1/DOT///password");
@@ -110,6 +110,7 @@ namespace Substrate.NET.Wallet.Test.Keyrings
             Assert.That(res.Path[1].ChainCode, Is.EqualTo(HelloWorldDotBytes));
         }
 
+        [Test]
         public void KeyExtractUri_DeriveMultiple_4()
         {
             var res = Uri.KeyExtractUri("hello world/1//DOT///password");
@@ -125,6 +126,7 @@ namespace Substrate.NET.Wallet.Test.Keyrings
             Assert.That(res.Path[1].ChainCode, Is.EqualTo(HelloWorldDotBytes));
         }
 
+        [Test]
         public void KeyExtractUri_DeriveMultiple_Alice()
         {
             var res = Uri.KeyExtractUri("bottom drive obey lake curtain smoke basket hold race lonely fit walk//Alice");
@@ -177,9 +179,44 @@ namespace Substrate.NET.Wallet.Test.Keyrings
         [Test]
         [TestCase("1/2")]
         [TestCase("hello")]
+        [TestCase("//funding/")]
         public void KeyExtractPath_InvalidPath_ShouldFail(string value)
         {
-            Assert.Throws<InvalidOperationException>(() => Uri.KeyExtractPath("value"));
+            Assert.Throws<InvalidOperationException>(() => Uri.KeyExtractPath(value));
+        }
+
+        // <summary>
+        /// Parity source : https://github.com/polkadot-js/wasm/blob/master/packages/wasm-crypto/src/rs/sr25519.rs#L294
+        /// </summary>
+        [Test]
+        public void Sr25519_DeriveHard_ShouldSucceed()
+        {
+            var cc = Utils.HexToByteArray("14416c6963650000000000000000000000000000000000000000000000000000");
+            var seed = Utils.HexToByteArray("fac7959dbfe72f052e5a0c3c8d6530f202b02fd8f9f5ca3580ec8deb7797479e");
+            var expected = Utils.HexToByteArray("d43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d");
+
+            var res = Keyring.Uri.Sr25519DeriveHard(seed, cc);
+
+            Assert.That(res.Length, Is.EqualTo(96));
+
+            var publicKey = res.Skip(64).Take(32);
+            Assert.That(publicKey, Is.EquivalentTo(expected));
+        }
+
+        [Test]
+        public void Sr25519_CreateDeriveSoft_ShouldSucceed()
+        {
+            var cc = Utils.HexToByteArray("0c666f6f00000000000000000000000000000000000000000000000000000000");
+            var seed = Utils.HexToByteArray("fac7959dbfe72f052e5a0c3c8d6530f202b02fd8f9f5ca3580ec8deb7797479e");
+            var expected = Utils.HexToByteArray("40b9675df90efa6069ff623b0fdfcf706cd47ca7452a5056c7ad58194d23440a");
+
+            var res = Keyring.Uri.Sr25519DeriveSoft(seed, cc);
+
+            Assert.That(res.Length, Is.EqualTo(96));
+
+            var publicKey = res.Skip(64).Take(32);
+
+            Assert.That(publicKey, Is.EquivalentTo(expected));
         }
     }
 }

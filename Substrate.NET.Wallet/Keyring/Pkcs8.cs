@@ -1,13 +1,10 @@
-﻿using Schnorrkel.Keys;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Text;
 
 namespace Substrate.NET.Wallet.Keyring
 {
     public static class Pkcs8
     {
-
         public static PairInfo Decode(string password, byte[] encoded, List<WalletJson.EncryptedJsonEncoding> encryptedEncoding)
         {
             var decoded = Pair.DecodePair(password, encoded, encryptedEncoding);

@@ -1,27 +1,20 @@
 ﻿using NUnit.Framework;
-using System;
-using System.IO;
+using Substrate.NET.Wallet.Derivation;
 using Substrate.NET.Wallet.Keyring;
 using Substrate.NetApi;
-using static Substrate.NetApi.Mnemonic;
+using System;
+using System.IO;
 using System.Linq;
+using Substrate.NetApi.Extensions;
 
 namespace Substrate.NET.Wallet.Test
 {
-    internal class KeyringTest
+    internal class KeyringTest : MainTests
     {
         protected string readJsonFromFile(string jsonFile)
         {
             return File.ReadAllText($"{AppContext.BaseDirectory}/Data/{jsonFile}");
         }
-
-        private Meta defaultMeta = new Meta()
-        {
-            genesisHash = "0x91b171bb158e2d3848fa23a9f1c25182fb8e20313b2c1eb49219da7a70ce90c3",
-            isHardware = false,
-            name = "SubstrateAccount2",
-            tags = null
-        };
 
         [Test]
         [TestCase("json_alice.json", "alicealice")]
@@ -49,14 +42,14 @@ namespace Substrate.NET.Wallet.Test
 
         [Test]
         [TestCase("json_account1.json")]
-        public void ValidJson_WithInvalidPassword_ShouldThrowException(string json)
+        public void ValidJson_WithInvalidPassword_ShouldReturnFalse(string json)
         {
             var input = readJsonFromFile(json);
 
             var keyring = new Keyring.Keyring();
             var res = keyring.AddFromJson(input);
 
-            Assert.Throws<InvalidOperationException>(() => res.Unlock("SS2"));
+            Assert.That(res.Unlock("SS2"), Is.EqualTo(false));
         }
 
         [Test]
@@ -67,6 +60,7 @@ namespace Substrate.NET.Wallet.Test
 
             var keyring = new Keyring.Keyring();
             var wallet = keyring.AddFromJson(input);
+            wallet.PasswordPolicy = passwordLightPolicy;
 
             var walletEncryptionSamePassword = wallet.ToWalletFile("walletName", password);
 
@@ -96,14 +90,14 @@ namespace Substrate.NET.Wallet.Test
             var keyring = new Keyring.Keyring();
             var kp = keyring.AddFromMnemonic(Mnemonic.GenerateMnemonic(Mnemonic.MnemonicSize.Words12), new Meta()
             {
-                genesisHash = "0x91b171bb158e2d3848fa23a9f1c25182fb8e20313b2c1eb49219da7a70ce90c3",
-                isHardware = false,
-                name = "SubstrateAccount",
-                tags = null
+                GenesisHash = "0x91b171bb158e2d3848fa23a9f1c25182fb8e20313b2c1eb49219da7a70ce90c3",
+                IsHardware = false,
+                Name = "SubstrateAccount",
+                Tags = null
             }, NetApi.Model.Types.KeyType.Sr25519);
 
-            var walletResult = kp.ToWalletFile("walletName", "testPassword");
-            Assert.That(walletResult.meta.name, Is.EqualTo("walletName"));
+            var walletResult = kp.ToWalletFile("walletName", "testPassword1");
+            Assert.That(walletResult.Meta.Name, Is.EqualTo("walletName"));
             var jsonResult = walletResult.ToJson();
 
             Assert.That(jsonResult, Is.Not.Null);
@@ -150,23 +144,41 @@ namespace Substrate.NET.Wallet.Test
         }
 
         [Test]
+        [TestCase(NetApi.Model.Types.KeyType.Ed25519)]
+        [TestCase(NetApi.Model.Types.KeyType.Sr25519)]
+        public void GenerateNewAccount_SignAndVerify(NetApi.Model.Types.KeyType keyType)
+        {
+            var keyring = new Keyring.Keyring();
+
+            var mnemonic = Mnemonic.GenerateMnemonic(Mnemonic.MnemonicSize.Words12);
+            var wallet = keyring.AddFromMnemonic(mnemonic, new Meta() { Name = "My account name" }, keyType);
+
+            var message = "Hello Polkadot !".ToBytes();
+            var sign = wallet.Sign(message);
+
+            Assert.That(wallet.Verify(sign, message));
+        }
+
+        [Test]
         public void WikiExample_Test()
         {
             // Create a new Keyring, by default ss58 format is 42 (Substrate standard address)
-            var keyring = new Substrate.NET.Wallet.Keyring.Keyring();
+            var keyring = new Keyring.Keyring();
 
             // You can specify ss58 address if needed (check SS58 regitry here : https://github.com/paritytech/ss58-registry/blob/main/ss58-registry.json)
             keyring.Ss58Format = 0; // Polkadot
 
             // Generate a new mnemonic for a new account
-            var newMnemonic = Mnemonic.GenerateMnemonic(MnemonicSize.Words12);
+            var newMnemonic = Mnemonic.GenerateMnemonic(Mnemonic.MnemonicSize.Words12);
             Assert.That(newMnemonic.Count(), Is.EqualTo(12));
 
             // Use an existing mnemonic
             var existingMnemonicAccount = "entire material egg meadow latin bargain dutch coral blood melt acoustic thought";
 
             // Import an account from mnemonic automatically unlock all feature
-            var firstWallet = keyring.AddFromMnemonic(existingMnemonicAccount, new Meta() { name = "My account name"}, NetApi.Model.Types.KeyType.Ed25519);
+            var firstWallet = keyring.AddFromMnemonic(existingMnemonicAccount, new Meta() { Name = "My account name"}, NetApi.Model.Types.KeyType.Sr25519);
+            firstWallet.PasswordPolicy = passwordLightPolicy;
+
             // firstPair.IsLocked => false
             Assert.That(firstWallet.IsLocked, Is.False);
             Assert.That(firstWallet.IsStored, Is.False);
@@ -175,6 +187,7 @@ namespace Substrate.NET.Wallet.Test
             var json = firstWallet.ToJson("myWalletName", "myPassword");
             // Import an account from a json file
             var secondWallet = keyring.AddFromJson(json);
+            secondWallet.PasswordPolicy = passwordLightPolicy;
 
             Assert.That(secondWallet.IsLocked, Is.True);
             // You need to unlock the account with the associated password
@@ -186,6 +199,52 @@ namespace Substrate.NET.Wallet.Test
             var signature = firstWallet.Sign(message);
             var isVerify = firstWallet.Verify(signature, message);
             Assert.That(isVerify, Is.True);
+        }
+
+        [Test]
+        public void KeyPairFromSeed()
+        {
+            var seed = Utils.HexToByteArray("fac7959dbfe72f052e5a0c3c8d6530f202b02fd8f9f5ca3580ec8deb7797479e");
+            var expected = Utils.HexToByteArray("46ebddef8cd9bb167dc30878d7113b7e168e6f0646beffd77d69d39bad76b47a");
+
+            var keyPair = Keyring.Keyring.KeyPairFromSeed(NetApi.Model.Types.KeyType.Sr25519, seed);
+            Assert.That(keyPair.PublicKey.Length, Is.EqualTo(Keys.PUBLIC_KEY_LENGTH));
+            Assert.That(keyPair.SecretKey.Length, Is.EqualTo(Keys.SECRET_KEY_LENGTH));
+
+            Assert.That(keyPair.PublicKey, Is.EqualTo(expected));
+        }
+
+        [Test]
+        [TestCase("bottom drive obey lake curtain smoke basket hold race lonely fit walk")]
+        public void MnemonicPhraseValid_ShouldSuceed(string mnemonic)
+        {
+            Assert.That(Keyring.Keyring.IsMnemonicPhraseValid(mnemonic), Is.True);
+
+            var randomMnemonic_12 = Mnemonic.GenerateMnemonic(Mnemonic.MnemonicSize.Words12);
+            Assert.That(Keyring.Keyring.IsMnemonicPhraseValid(randomMnemonic_12), Is.True);
+
+            var randomMnemonic_15 = Mnemonic.GenerateMnemonic(Mnemonic.MnemonicSize.Words15);
+            Assert.That(Keyring.Keyring.IsMnemonicPhraseValid(randomMnemonic_15), Is.True);
+
+            var randomMnemonic_18 = Mnemonic.GenerateMnemonic(Mnemonic.MnemonicSize.Words18);
+            Assert.That(Keyring.Keyring.IsMnemonicPhraseValid(randomMnemonic_18), Is.True);
+
+            var randomMnemonic_21 = Mnemonic.GenerateMnemonic(Mnemonic.MnemonicSize.Words21);
+            Assert.That(Keyring.Keyring.IsMnemonicPhraseValid(randomMnemonic_21), Is.True);
+
+            var randomMnemonic_24 = Mnemonic.GenerateMnemonic(Mnemonic.MnemonicSize.Words24);
+            Assert.That(Keyring.Keyring.IsMnemonicPhraseValid(randomMnemonic_24), Is.True);
+        }
+
+        [Test]
+        [TestCase("bobo drive obey lake curtain smoke basket hold race lonely fit walk")]
+        [TestCase("b d o l c s b h r l f w")]
+        [TestCase("string mnemonic obey lake curtain smoke basket hold race lonely fit walk")]
+        [TestCase("Hey i'm not good")]
+        [TestCase("")]
+        public void MnemonicPhraseInvalid_ShouldFail(string mnemonic)
+        {
+            Assert.That(Keyring.Keyring.IsMnemonicPhraseValid(mnemonic), Is.False);
         }
     }
 }

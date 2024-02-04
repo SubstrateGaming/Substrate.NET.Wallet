@@ -1,15 +1,8 @@
-﻿using Chaos.NaCl;
-using NUnit.Framework;
-using Substrate.NET.Wallet.Extensions;
-using Substrate.NET.Wallet.Keyring;
+﻿using NUnit.Framework;
 using Substrate.NetApi;
 using Substrate.NetApi.Extensions;
-using Substrate.NetApi.Model.Types;
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Substrate.NET.Wallet.Test.Keyrings
 {
@@ -25,7 +18,7 @@ namespace Substrate.NET.Wallet.Test.Keyrings
             Utils.HexToByteArray("0x9d61b19deffd5a60ba844af492ec2cc44449c5697b326919703bac031cae7f60")
         );
 
-        Substrate.NET.Wallet.Keyring.Keyring keyring { get; set; }
+        private Substrate.NET.Wallet.Keyring.Keyring keyring { get; set; }
 
         [SetUp]
         public void Setup()
@@ -47,11 +40,12 @@ namespace Substrate.NET.Wallet.Test.Keyrings
         }
 
         [Test]
-        public void CreateEd25519_WithMnemonic()
+        [TestCase("seed sock milk update focus rotate barely fade car face mechanic mercy", "5DkQP32jP4DVJLWWBRBoZF2tpWjqFrcrTBo6H5NcSk7MxKCC")]
+        public void CreateEd25519_WithMnemonic(string mnemonic, string publicKey)
         {
             var kp = keyring.AddFromUri(
-                    "seed sock milk update focus rotate barely fade car face mechanic mercy", null, NetApi.Model.Types.KeyType.Ed25519);
-            Assert.That(kp.Address, Is.EqualTo("5DkQP32jP4DVJLWWBRBoZF2tpWjqFrcrTBo6H5NcSk7MxKCC"));
+                    mnemonic, null, NetApi.Model.Types.KeyType.Ed25519);
+            Assert.That(kp.Address, Is.EqualTo(publicKey));
         }
 
         [Test]
