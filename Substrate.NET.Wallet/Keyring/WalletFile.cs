@@ -1,9 +1,6 @@
-﻿using CryptSharp.Utility;
-using Newtonsoft.Json;
-using Substrate.NetApi.Model.Types;
+﻿using Substrate.NetApi.Model.Types;
 using System;
 using System.Collections.Generic;
-using System.Text;
 using System.Text.Json.Serialization;
 
 namespace Substrate.NET.Wallet.Keyring
@@ -23,10 +20,13 @@ namespace Substrate.NET.Wallet.Keyring
             {
                 case EncryptedJsonEncoding.None:
                     return "none";
+
                 case EncryptedJsonEncoding.Scrypt:
                     return "scrypt";
+
                 case EncryptedJsonEncoding.Xsalsa20Poly1305:
                     return "xsalsa20-poly1305";
+
                 default:
                     throw new InvalidOperationException($"{encrypt} encryption is not supported");
             }
@@ -38,10 +38,13 @@ namespace Substrate.NET.Wallet.Keyring
             {
                 case "none":
                     return EncryptedJsonEncoding.None;
+
                 case "scrypt":
                     return EncryptedJsonEncoding.Scrypt;
+
                 case "xsalsa20-poly1305":
                     return EncryptedJsonEncoding.Xsalsa20Poly1305;
+
                 default:
                     throw new InvalidOperationException($"{encrypt} encryption is not supported");
             }
@@ -57,7 +60,7 @@ namespace Substrate.NET.Wallet.Keyring
 
         public string ToJson()
         {
-            return JsonConvert.SerializeObject(this);
+            return System.Text.Json.JsonSerializer.Serialize(this);
         }
 
         public KeyType GetKeyType()
@@ -66,8 +69,10 @@ namespace Substrate.NET.Wallet.Keyring
             {
                 case "ed25519":
                     return KeyType.Ed25519;
+
                 case "sr25519":
                     return KeyType.Sr25519;
+
                 default: throw new InvalidOperationException($"{encoding.content[1]} type is not supported");
             }
         }

@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 
 namespace Substrate.NET.Wallet
 {
@@ -157,7 +156,6 @@ namespace Substrate.NET.Wallet
 
         public class ShouldManager : ShouldAbstract
         {
-
             public ShouldManager(WordManager wm) : base(wm)
             {
             }
@@ -181,9 +179,8 @@ namespace Substrate.NET.Wallet
             }
         }
 
-        public class ShouldNotManager : ShouldManager {
-
-
+        public class ShouldNotManager : ShouldManager
+        {
             public ShouldNotManager(WordManager wm) : base(wm)
             {
             }

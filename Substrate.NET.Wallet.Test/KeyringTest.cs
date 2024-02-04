@@ -1,12 +1,10 @@
 ﻿using NUnit.Framework;
-using System;
-using System.IO;
+using Substrate.NET.Wallet.Derivation;
 using Substrate.NET.Wallet.Keyring;
 using Substrate.NetApi;
-using static Substrate.NetApi.Mnemonic;
+using System;
+using System.IO;
 using System.Linq;
-using Substrate.NET.Wallet.Extensions;
-using Substrate.NET.Wallet.Derivation;
 
 namespace Substrate.NET.Wallet.Test
 {
@@ -16,8 +14,6 @@ namespace Substrate.NET.Wallet.Test
         {
             return File.ReadAllText($"{AppContext.BaseDirectory}/Data/{jsonFile}");
         }
-
-        
 
         [Test]
         [TestCase("json_alice.json", "alicealice")]
@@ -156,14 +152,14 @@ namespace Substrate.NET.Wallet.Test
             keyring.Ss58Format = 0; // Polkadot
 
             // Generate a new mnemonic for a new account
-            var newMnemonic = Mnemonic.GenerateMnemonic(MnemonicSize.Words12);
+            var newMnemonic = Mnemonic.GenerateMnemonic(Mnemonic.MnemonicSize.Words12);
             Assert.That(newMnemonic.Count(), Is.EqualTo(12));
 
             // Use an existing mnemonic
             var existingMnemonicAccount = "entire material egg meadow latin bargain dutch coral blood melt acoustic thought";
 
             // Import an account from mnemonic automatically unlock all feature
-            var firstWallet = keyring.AddFromMnemonic(existingMnemonicAccount, new Meta() { name = "My account name"}, NetApi.Model.Types.KeyType.Ed25519);
+            var firstWallet = keyring.AddFromMnemonic(existingMnemonicAccount, new Meta() { name = "My account name" }, NetApi.Model.Types.KeyType.Ed25519);
             firstWallet.PasswordPolicy = passwordLightPolicy;
 
             // firstPair.IsLocked => false
@@ -197,7 +193,7 @@ namespace Substrate.NET.Wallet.Test
             var keyPair = Keyring.Keyring.KeyPairFromSeed(NetApi.Model.Types.KeyType.Sr25519, seed);
             Assert.That(keyPair.PublicKey.Length, Is.EqualTo(Keys.PUBLIC_KEY_LENGTH));
             Assert.That(keyPair.SecretKey.Length, Is.EqualTo(Keys.SECRET_KEY_LENGTH));
-            
+
             Assert.That(keyPair.PublicKey, Is.EqualTo(expected));
         }
 

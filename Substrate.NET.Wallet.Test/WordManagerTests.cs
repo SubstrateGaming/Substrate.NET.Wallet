@@ -1,15 +1,13 @@
 ﻿using NUnit.Framework;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Substrate.NET.Wallet.Test
 {
     public class WordManagerTests
     {
         private WordManager _wordManagerWithRequirement;
+
         private WordManager _wordManagerWithForbidden
             ;
 
@@ -32,14 +30,14 @@ namespace Substrate.NET.Wallet.Test
         [TestCase("E7ird@M!jGc&")]
         public void WordManager_WithShould_WithValidInput_ShouldSuceed(string phrase)
         {
-            Assert.IsTrue(_wordManagerWithRequirement.IsValid(phrase));
+            Assert.That(_wordManagerWithRequirement.IsValid(phrase), Is.True);
         }
 
         [Test]
         [TestCase("ONLYUPPER")]
         public void WordManager_WithShouldNot_WithValidInput_ShouldSuceed(string phrase)
         {
-            Assert.IsTrue(_wordManagerWithForbidden.IsValid(phrase));
+            Assert.That(_wordManagerWithForbidden.IsValid(phrase), Is.True);
         }
 
         [Test]
@@ -52,7 +50,7 @@ namespace Substrate.NET.Wallet.Test
         [TestCase("O111111111111", 1)]
         public void WordManager_ShouldPattern_WithInvalidInput_ShouldFail(string word, int nbError)
         {
-            Assert.IsFalse(_wordManagerWithRequirement.IsValid(word));
+            Assert.That(_wordManagerWithRequirement.IsValid(word), Is.False);
 
             var errorCount = _wordManagerWithRequirement.GetErrors(word).Count();
             Assert.That(errorCount, Is.EqualTo(nbError));
@@ -63,7 +61,7 @@ namespace Substrate.NET.Wallet.Test
         [TestCase("Xx0", 2)]
         public void WordManager_ShouldNotPattern_WithInvalidInput_ShouldFail(string word, int nbError)
         {
-            Assert.IsFalse(_wordManagerWithForbidden.IsValid(word));
+            Assert.That(_wordManagerWithForbidden.IsValid(word), Is.False);
 
             var errorCount = _wordManagerWithForbidden.GetErrors(word).Count();
             Assert.That(errorCount, Is.EqualTo(nbError));
@@ -72,7 +70,7 @@ namespace Substrate.NET.Wallet.Test
         [Test]
         public void WordManager_WithInvalidSettings_ShouldFail()
         {
-            Assert.Throws<ArgumentException>(() => 
+            Assert.Throws<ArgumentException>(() =>
             WordManager.Create().WithMinimumLength(10).WithMaximumLength(8));
 
             Assert.Throws<ArgumentException>(() =>

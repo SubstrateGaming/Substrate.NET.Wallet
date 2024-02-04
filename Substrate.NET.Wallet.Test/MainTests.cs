@@ -1,12 +1,7 @@
-﻿using Substrate.NET.Schnorrkel.Keys;
-using Substrate.NET.Wallet.Keyring;
+﻿using Substrate.NET.Wallet.Keyring;
 using Substrate.NetApi;
 using Substrate.NetApi.Model.Types;
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Substrate.NET.Wallet.Test
 {
@@ -14,6 +9,7 @@ namespace Substrate.NET.Wallet.Test
     {
         protected Dictionary<string, PairDefTest> pairDefs;
         protected WordManager passwordLightPolicy;
+
         protected MainTests()
         {
             passwordLightPolicy = WordManager.Create().WithMinimumLength(2);
@@ -41,7 +37,7 @@ namespace Substrate.NET.Wallet.Test
                         SecretKey = "0x081ff694633e255136bdb456c20a5fc8fed21f8b964c11bb17ff534ce80ebd5941ae88f85d0c1bfc37be41c904e1dfc01de8c8067b0d6d5df25dd1ac0894a325",
                         Seed = "Bob",
                         KeyType = KeyType.Sr25519
-                    }   
+                    }
                 },
                 { "Bob stash", new PairDefTest()
                     {

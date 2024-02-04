@@ -1,12 +1,6 @@
 using NUnit.Framework;
-using Substrate.NET.Wallet;
-using Substrate.NET.Wallet.Keyring;
-using Substrate.NetApi;
-using Substrate.NetApi.Extensions;
-using Substrate.NetApi.Model.Types;
 using System;
 using System.IO;
-using System.Text;
 
 namespace Substrate.NET.Wallet.Test
 {
@@ -25,23 +19,23 @@ namespace Substrate.NET.Wallet.Test
         [Test]
         public void IsValidPasswordTest()
         {
-            Assert.False(Wallet.IsValidPassword("12345678"));
-            Assert.False(Wallet.IsValidPassword("ABCDEFGH"));
-            Assert.False(Wallet.IsValidPassword("abcdefgh"));
-            Assert.False(Wallet.IsValidPassword("ABCDefgh"));
-            
-            Assert.True(Wallet.IsValidPassword("1BCDefg"));
-            Assert.True(Wallet.IsValidPassword("ABCDefg1"));
+            Assert.That(Wallet.IsValidPassword("12345678"), Is.False);
+            Assert.That(Wallet.IsValidPassword("ABCDEFGH"), Is.False);
+            Assert.That(Wallet.IsValidPassword("abcdefgh"), Is.False);
+            Assert.That(Wallet.IsValidPassword("ABCDefgh"), Is.False);
+
+            Assert.That(Wallet.IsValidPassword("1BCDefg"), Is.True);
+            Assert.That(Wallet.IsValidPassword("ABCDefg1"), Is.True);
         }
 
         [Test]
         public void IsValidWalletNameTest()
         {
-            Assert.False(Wallet.IsValidWalletName("1234"));
-            Assert.False(Wallet.IsValidWalletName("ABC_/"));
-            Assert.False(Wallet.IsValidWalletName("1111111"));
+            Assert.That(Wallet.IsValidWalletName("1234"), Is.False);
+            Assert.That(Wallet.IsValidWalletName("ABC_/"), Is.False);
+            Assert.That(Wallet.IsValidWalletName("1111111"), Is.False);
 
-            Assert.True(Wallet.IsValidWalletName("wal_let"));
+            Assert.That(Wallet.IsValidWalletName("wal_let"), Is.True);
         }
     }
 }

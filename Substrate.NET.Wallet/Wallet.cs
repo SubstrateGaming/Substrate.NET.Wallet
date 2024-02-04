@@ -31,6 +31,7 @@ namespace Substrate.NET.Wallet
         /// Encoded value in JSON file
         /// </summary>
         public byte[] Encoded { get; internal set; }
+
         public List<WalletJson.EncryptedJsonEncoding> EncryptedEncoding { get; internal set; }
         public KeyType KeyType { get; internal set; }
         public Meta Meta { get; internal set; }
@@ -76,6 +77,7 @@ namespace Substrate.NET.Wallet
         ///   <c>true</c> if this instance is unlocked; otherwise, <c>false</c>.
         /// </value>
         public bool IsUnlocked => Account != null && !Pair.IsLocked(Account.PrivateKey);
+
         public bool IsLocked => !IsUnlocked;
 
         /// <summary>
@@ -85,6 +87,7 @@ namespace Substrate.NET.Wallet
         ///   <c>true</c> if this instance is created; otherwise, <c>false</c>.
         /// </value>
         public bool IsStored => _isStored;
+
         private bool _isStored = false;
 
         /// <summary>
@@ -176,6 +179,7 @@ namespace Substrate.NET.Wallet
         }
 
         public Wallet Derive(string sUri) => Derive(sUri, null);
+
         public Wallet Derive(string sUri, Meta meta)
         {
             if (!IsUnlocked)
@@ -183,7 +187,7 @@ namespace Substrate.NET.Wallet
 
             var res = Keyring.Uri.KeyExtractPath(sUri);
 
-            if(KeyType == KeyType.Ed25519 && res.Path.Any(x => x.IsSoft))
+            if (KeyType == KeyType.Ed25519 && res.Path.Any(x => x.IsSoft))
             {
                 throw new InvalidOperationException($"Soft derivation paths are not allowed on {KeyType}");
             }
@@ -199,7 +203,7 @@ namespace Substrate.NET.Wallet
         /// <returns></returns>
         public void Save(string walletName, string password)
         {
-            if (string.IsNullOrEmpty(Meta.name)) 
+            if (string.IsNullOrEmpty(Meta.name))
                 throw new InvalidOperationException($"No wallet name has been specified. Please update {nameof(Meta)}.{nameof(Meta.name)} propery with account name");
 
             Caching.Persist(Wallet.ConcatWalletFileType(Meta.name), ToJson(walletName, password));
@@ -251,7 +255,6 @@ namespace Substrate.NET.Wallet
             return true;
         }
 
-
         #region Sign
 
         public byte[] Sign(string message, bool wrap = true)
@@ -261,7 +264,6 @@ namespace Substrate.NET.Wallet
         {
             if (!IsUnlocked)
                 throw new InvalidOperationException("Cannot sign a message on a locked account");
-
 
             if (wrap && !WrapMessage.IsWrapped(message))
             {
@@ -297,7 +299,8 @@ namespace Substrate.NET.Wallet
             signature = signer.Sign(message);
             return true;
         }
-        #endregion
+
+        #endregion Sign
 
         #region Verify
 
@@ -317,13 +320,15 @@ namespace Substrate.NET.Wallet
             try
             {
                 return Account.Verify(signature, message);
-            } catch(Exception ex)
+            }
+            catch (Exception ex)
             {
                 Logger.Warning(ex.Message);
                 return false;
             }
         }
-        #endregion
+
+        #endregion Verify
 
         /// <summary>
         /// Determines whether [is valid wallet name] [the specified wallet name].
@@ -332,7 +337,7 @@ namespace Substrate.NET.Wallet
         /// <returns>
         ///   <c>true</c> if [is valid wallet name] [the specified wallet name]; otherwise, <c>false</c>.
         /// </returns>
-        public static bool IsValidWalletName(string walletName) 
+        public static bool IsValidWalletName(string walletName)
             => WordManager.StandardAccountName.IsValid(walletName);
 
         /// <summary>

@@ -5,8 +5,6 @@ using Substrate.NetApi.Model.Types;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Security.Cryptography;
-using System.Text;
 
 namespace Substrate.NET.Wallet.Keyring
 {
@@ -26,7 +24,6 @@ namespace Substrate.NET.Wallet.Keyring
     {
         public PairInfo(byte[] publicKey) : this(publicKey, null)
         {
-
         }
 
         public PairInfo(byte[] publicKey, byte[] secretKey)
@@ -57,6 +54,7 @@ namespace Substrate.NET.Wallet.Keyring
 
         public const int ENCODING_VERSION = 3;
         public static readonly string[] ENCODING_NONE = { WalletJson.EncryptedToString(WalletJson.EncryptedJsonEncoding.None) };
+
         public static readonly string[] ENCODING = {
             WalletJson.EncryptedToString(WalletJson.EncryptedJsonEncoding.Scrypt),
             WalletJson.EncryptedToString(WalletJson.EncryptedJsonEncoding.Xsalsa20Poly1305),

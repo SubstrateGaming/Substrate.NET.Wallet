@@ -1,10 +1,9 @@
-﻿using Substrate.NetApi.Extensions;
+﻿using Substrate.NetApi;
+using Substrate.NetApi.Extensions;
 using Substrate.NetApi.Model.Types.Primitive;
-using Substrate.NetApi;
 using System;
 using System.Collections.Generic;
 using System.Numerics;
-using System.Text;
 using System.Text.RegularExpressions;
 
 namespace Substrate.NET.Wallet.Derivation
@@ -52,6 +51,7 @@ namespace Substrate.NET.Wallet.Derivation
 
             return this;
         }
+
         public DeriveJunction Soft(BigInteger value)
         {
             return Soft(value.ToByteArray());

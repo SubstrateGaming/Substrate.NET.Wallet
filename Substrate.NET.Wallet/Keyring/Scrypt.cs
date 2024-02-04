@@ -101,7 +101,6 @@ namespace Substrate.NET.Wallet.Keyring
         /// </summary>
         public BigInteger BlockSize { get; }
 
-
         public ScryptParam(BigInteger iterationCount, BigInteger threadCount, BigInteger blockSize)
         {
             IterationCount = iterationCount;

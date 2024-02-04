@@ -1,6 +1,6 @@
-﻿using Newtonsoft.Json;
-using Serilog;
+﻿using Serilog;
 using System;
+using System.Text.Json;
 
 namespace Substrate.NET.Wallet
 {
@@ -23,7 +23,7 @@ namespace Substrate.NET.Wallet
             try
             {
                 var objDecrypted = Decrypt(SystemInteraction.ReadAllText(path));
-                obj = JsonConvert.DeserializeObject<T>(objDecrypted);
+                obj = JsonSerializer.Deserialize<T>(objDecrypted);
                 return true;
             }
             catch (Exception e)
@@ -41,7 +41,7 @@ namespace Substrate.NET.Wallet
         /// <param name="obj">The object.</param>
         public static void Persist<T>(string path, T obj)
         {
-            var objEncrypted = Encrypt(JsonConvert.SerializeObject(obj));
+            var objEncrypted = Encrypt(JsonSerializer.Serialize(obj));
             SystemInteraction.Persist(path, objEncrypted);
         }
 

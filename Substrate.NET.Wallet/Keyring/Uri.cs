@@ -2,13 +2,10 @@
 using Substrate.NET.Wallet.Derivation;
 using Substrate.NET.Wallet.Extensions;
 using Substrate.NetApi;
-using Substrate.NetApi.Extensions;
 using Substrate.NetApi.Model.Types;
-using Substrate.NetApi.Model.Types.Primitive;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Numerics;
 using System.Text.RegularExpressions;
 
 namespace Substrate.NET.Wallet.Keyring
@@ -74,7 +71,7 @@ namespace Substrate.NET.Wallet.Keyring
 
         public static PairInfo KeyFromPath(PairInfo pair, IList<DeriveJunction> paths, KeyType keyType)
         {
-            foreach(var path in paths)
+            foreach (var path in paths)
             {
                 pair = CreateDerive(keyType, path, pair);
             }
@@ -93,16 +90,17 @@ namespace Substrate.NET.Wallet.Keyring
                         Sr25519DeriveSoft(keyPair, path.ChainCode);
 
                     return new PairInfo(
-                        res.SubArray(Keys.SECRET_KEY_LENGTH, Keys.SECRET_KEY_LENGTH + Keys.PUBLIC_KEY_LENGTH), 
+                        res.SubArray(Keys.SECRET_KEY_LENGTH, Keys.SECRET_KEY_LENGTH + Keys.PUBLIC_KEY_LENGTH),
                         res.SubArray(0, Keys.SECRET_KEY_LENGTH));
 
                 case KeyType.Ed25519:
-                    if(path.IsHard)
+                    if (path.IsHard)
                     {
                         return Keyring.KeyPairFromSeed(
-                            KeyType.Ed25519, 
+                            KeyType.Ed25519,
                             Ed25519DeriveHard(pair.SecretKey, path.ChainCode));
-                    } else
+                    }
+                    else
                     {
                         throw new InvalidOperationException($"Soft derivation paths are not allowed on {KeyType.Ed25519}");
                     }
@@ -117,7 +115,7 @@ namespace Substrate.NET.Wallet.Keyring
             return Sr25519DeriveHard(miniSecret.GetPair(), chainCode);
         }
 
-        public static byte[] Sr25519DeriveHard(KeyPair pair , byte[] chainCode)
+        public static byte[] Sr25519DeriveHard(KeyPair pair, byte[] chainCode)
         {
             if (chainCode.Length != 32)
                 throw new InvalidOperationException("Invalid chainCode passed to derive");
@@ -144,7 +142,7 @@ namespace Substrate.NET.Wallet.Keyring
         }
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         /// <param name="secretKey">64 bytes private key + nonce</param>
         /// <param name="chainCode"></param>
