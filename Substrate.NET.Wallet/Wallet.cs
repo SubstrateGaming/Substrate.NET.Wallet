@@ -8,12 +8,12 @@ using Substrate.NetApi.Sign;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
 
 namespace Substrate.NET.Wallet
 {
     /// <summary>
     /// Basic Wallet implementation
-    /// TODO: Make sure that a live runtime change is handled correctly.
     /// </summary>
     public class Wallet
     {
@@ -168,9 +168,15 @@ namespace Substrate.NET.Wallet
             return Pair.ToJsonPair(KeyType, Address, generatedMeta, Encoded, !string.IsNullOrEmpty(password));
         }
 
+        /// <summary>
+        /// To the json.
+        /// </summary>
+        /// <param name="walletName"></param>
+        /// <param name="password"></param>
+        /// <returns></returns>
         public string ToJson(string walletName, string password)
         {
-            return System.Text.Json.JsonSerializer.Serialize(ToWalletFile(walletName, password));
+            return JsonSerializer.Serialize(ToWalletFile(walletName, password));
         }
 
         public byte[] Recode(string password)
@@ -178,8 +184,21 @@ namespace Substrate.NET.Wallet
             return Pair.EncodePair(password, Account.ToPair());
         }
 
+        /// <summary>
+        /// Derive a new account from the current account
+        /// </summary>
+        /// <param name="sUri"></param>
+        /// <returns></returns>
         public Wallet Derive(string sUri) => Derive(sUri, null);
 
+        /// <summary>
+        /// Derive a new account from the current account
+        /// </summary>
+        /// <param name="sUri"></param>
+        /// <param name="meta"></param>
+        /// <returns></returns>
+        /// <exception cref="InvalidCastException"></exception>
+        /// <exception cref="InvalidOperationException"></exception>
         public Wallet Derive(string sUri, Meta meta)
         {
             if (!IsUnlocked)
