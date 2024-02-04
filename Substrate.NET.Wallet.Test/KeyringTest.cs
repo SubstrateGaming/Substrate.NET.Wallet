@@ -89,14 +89,14 @@ namespace Substrate.NET.Wallet.Test
             var keyring = new Keyring.Keyring();
             var kp = keyring.AddFromMnemonic(Mnemonic.GenerateMnemonic(Mnemonic.MnemonicSize.Words12), new Meta()
             {
-                genesisHash = "0x91b171bb158e2d3848fa23a9f1c25182fb8e20313b2c1eb49219da7a70ce90c3",
-                isHardware = false,
-                name = "SubstrateAccount",
-                tags = null
+                GenesisHash = "0x91b171bb158e2d3848fa23a9f1c25182fb8e20313b2c1eb49219da7a70ce90c3",
+                IsHardware = false,
+                Name = "SubstrateAccount",
+                Tags = null
             }, NetApi.Model.Types.KeyType.Sr25519);
 
             var walletResult = kp.ToWalletFile("walletName", "testPassword1");
-            Assert.That(walletResult.meta.name, Is.EqualTo("walletName"));
+            Assert.That(walletResult.meta.Name, Is.EqualTo("walletName"));
             var jsonResult = walletResult.ToJson();
 
             Assert.That(jsonResult, Is.Not.Null);
@@ -159,7 +159,7 @@ namespace Substrate.NET.Wallet.Test
             var existingMnemonicAccount = "entire material egg meadow latin bargain dutch coral blood melt acoustic thought";
 
             // Import an account from mnemonic automatically unlock all feature
-            var firstWallet = keyring.AddFromMnemonic(existingMnemonicAccount, new Meta() { name = "My account name" }, NetApi.Model.Types.KeyType.Ed25519);
+            var firstWallet = keyring.AddFromMnemonic(existingMnemonicAccount, new Meta() { Name = "My account name" }, NetApi.Model.Types.KeyType.Ed25519);
             firstWallet.PasswordPolicy = passwordLightPolicy;
 
             // firstPair.IsLocked => false

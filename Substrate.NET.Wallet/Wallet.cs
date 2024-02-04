@@ -54,7 +54,7 @@ namespace Substrate.NET.Wallet
             Address = address;
             Encoded = encoded;
             Meta = meta;
-            FileName = meta?.name;
+            FileName = meta?.Name;
             Account = new Account();
             Account.Create(keyType, privateKey, publicKey);
             EncryptedEncoding = encryptedEncoding;
@@ -139,6 +139,13 @@ namespace Substrate.NET.Wallet
             return true;
         }
 
+        /// <summary>
+        /// Transform to wallet file.
+        /// </summary>
+        /// <param name="walletName"></param>
+        /// <param name="password"></param>
+        /// <returns></returns>
+        /// <exception cref="InvalidOperationException"></exception>
         public WalletFile ToWalletFile(string walletName, string password)
         {
             if (!IsUnlocked)
@@ -158,11 +165,11 @@ namespace Substrate.NET.Wallet
 
             var generatedMeta = new Meta()
             {
-                isHardware = false,
-                tags = new List<object>(),
-                whenCreated = DateTime.Now.Ticks,
-                name = walletName,
-                genesisHash = string.Empty
+                IsHardware = false,
+                Tags = new List<object>(),
+                WhenCreated = DateTime.Now.Ticks,
+                Name = walletName,
+                GenesisHash = string.Empty
             };
 
             return Pair.ToJsonPair(KeyType, Address, generatedMeta, Encoded, !string.IsNullOrEmpty(password));
@@ -179,6 +186,11 @@ namespace Substrate.NET.Wallet
             return JsonSerializer.Serialize(ToWalletFile(walletName, password));
         }
 
+        /// <summary>
+        /// Recode the account
+        /// </summary>
+        /// <param name="password"></param>
+        /// <returns></returns>
         public byte[] Recode(string password)
         {
             return Pair.EncodePair(password, Account.ToPair());
@@ -222,10 +234,10 @@ namespace Substrate.NET.Wallet
         /// <returns></returns>
         public void Save(string walletName, string password)
         {
-            if (string.IsNullOrEmpty(Meta.name))
-                throw new InvalidOperationException($"No wallet name has been specified. Please update {nameof(Meta)}.{nameof(Meta.name)} propery with account name");
+            if (string.IsNullOrEmpty(Meta.Name))
+                throw new InvalidOperationException($"No wallet name has been specified. Please update {nameof(Meta)}.{nameof(Meta.Name)} propery with account name");
 
-            Caching.Persist(Wallet.ConcatWalletFileType(Meta.name), ToJson(walletName, password));
+            Caching.Persist(Wallet.ConcatWalletFileType(Meta.Name), ToJson(walletName, password));
             _isStored = true;
         }
 
@@ -276,9 +288,22 @@ namespace Substrate.NET.Wallet
 
         #region Sign
 
+        /// <summary>
+        /// Sign the message
+        /// </summary>
+        /// <param name="message"></param>
+        /// <param name="wrap"></param>
+        /// <returns></returns>
         public byte[] Sign(string message, bool wrap = true)
                 => Sign(message.ToBytes(), wrap);
 
+        /// <summary>
+        /// Sign the message
+        /// </summary>
+        /// <param name="message"></param>
+        /// <param name="wrap"></param>
+        /// <returns></returns>
+        /// <exception cref="InvalidOperationException"></exception>
         public byte[] Sign(byte[] message, bool wrap = true)
         {
             if (!IsUnlocked)
@@ -323,9 +348,24 @@ namespace Substrate.NET.Wallet
 
         #region Verify
 
+        /// <summary>
+        /// Verify the message
+        /// </summary>
+        /// <param name="signature"></param>
+        /// <param name="message"></param>
+        /// <param name="wrap"></param>
+        /// <returns></returns>
         public bool Verify(byte[] signature, string message, bool wrap = true)
             => Verify(signature, message.ToBytes(), wrap);
 
+        /// <summary>
+        /// Verify the message
+        /// </summary>
+        /// <param name="signature"></param>
+        /// <param name="message"></param>
+        /// <param name="wrap"></param>
+        /// <returns></returns>
+        /// <exception cref="InvalidOperationException"></exception>
         public bool Verify(byte[] signature, byte[] message, bool wrap = true)
         {
             if (!IsUnlocked)

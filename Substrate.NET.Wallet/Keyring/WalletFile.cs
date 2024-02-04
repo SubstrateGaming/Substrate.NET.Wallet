@@ -5,15 +5,38 @@ using System.Text.Json.Serialization;
 
 namespace Substrate.NET.Wallet.Keyring
 {
+    /// <summary>
+    /// Wallet JSON
+    /// </summary>
     public static class WalletJson
     {
+        /// <summary>
+        /// Encrypted JSON encoding
+        /// </summary>
         public enum EncryptedJsonEncoding
         {
+            /// <summary>
+            /// None
+            /// </summary>
             None,
+
+            /// <summary>
+            /// Scrypt
+            /// </summary>
             Scrypt,
+
+            /// <summary>
+            /// Xsalsa20Poly1305
+            /// </summary>
             Xsalsa20Poly1305
         }
 
+        /// <summary>
+        /// Encrypted to string
+        /// </summary>
+        /// <param name="encrypt"></param>
+        /// <returns></returns>
+        /// <exception cref="InvalidOperationException"></exception>
         public static string EncryptedToString(EncryptedJsonEncoding encrypt)
         {
             switch (encrypt)
@@ -32,6 +55,12 @@ namespace Substrate.NET.Wallet.Keyring
             }
         }
 
+        /// <summary>
+        /// Encrypted from string
+        /// </summary>
+        /// <param name="encrypt"></param>
+        /// <returns></returns>
+        /// <exception cref="InvalidOperationException"></exception>
         public static EncryptedJsonEncoding EncryptedFromString(string encrypt)
         {
             switch (encrypt)
@@ -51,21 +80,52 @@ namespace Substrate.NET.Wallet.Keyring
         }
     }
 
+    /// <summary>
+    /// Wallet file
+    /// </summary>
     public class WalletFile
     {
-        public string encoded { get; set; }
-        public Encoding encoding { get; set; }
-        public string address { get; set; }
-        public Meta meta { get; set; }
+        /// <summary>
+        /// Encoded
+        /// </summary>
+        [JsonPropertyName("encoded")]
+        public string Encoded { get; set; }
 
+        /// <summary>
+        /// Encoding
+        /// </summary>
+        [JsonPropertyName("encoding")]
+        public Encoding Encoding { get; set; }
+
+        /// <summary>
+        /// Address
+        /// </summary>
+        [JsonPropertyName("address")]
+        public string Address { get; set; }
+
+        /// <summary>
+        /// Meta
+        /// </summary>
+        [JsonPropertyName("meta")]
+        public Meta Meta { get; set; }
+
+        /// <summary>
+        /// Convert to json
+        /// </summary>
+        /// <returns></returns>
         public string ToJson()
         {
             return System.Text.Json.JsonSerializer.Serialize(this);
         }
 
+        /// <summary>
+        /// Get the key type
+        /// </summary>
+        /// <returns></returns>
+        /// <exception cref="InvalidOperationException"></exception>
         public KeyType GetKeyType()
         {
-            switch (encoding.content[1].ToLowerInvariant())
+            switch (encoding.Content[1].ToLowerInvariant())
             {
                 case "ed25519":
                     return KeyType.Ed25519;
@@ -73,26 +133,69 @@ namespace Substrate.NET.Wallet.Keyring
                 case "sr25519":
                     return KeyType.Sr25519;
 
-                default: throw new InvalidOperationException($"{encoding.content[1]} type is not supported");
+                default: throw new InvalidOperationException($"{encoding.Content[1]} type is not supported");
             }
         }
     }
 
+    /// <summary>
+    /// Encoding for the wallet file
+    /// </summary>
     public class Encoding
     {
-        public List<string> content { get; set; }
-        public List<string> type { get; set; }
+        /// <summary>
+        /// Content
+        /// </summary>
+        [JsonPropertyName("content")]
+        public List<string> Content { get; set; }
 
+        /// <summary>
+        /// Type
+        /// </summary>
+        [JsonPropertyName("type")]
+        public List<string> Type { get; set; }
+
+        /// <summary>
+        /// Version
+        /// </summary>
+        [JsonPropertyName("version")]
         [JsonNumberHandling(JsonNumberHandling.AllowReadingFromString)]
-        public int version { get; set; }
+        public int Version { get; set; }
     }
 
+    /// <summary>
+    /// Metadata for the wallet file
+    /// </summary>
     public class Meta
     {
-        public string genesisHash { get; set; }
-        public bool isHardware { get; set; }
-        public string name { get; set; }
-        public List<object> tags { get; set; }
-        public long whenCreated { get; set; }
+        /// <summary>
+        /// Genesis hash
+        /// </summary>
+        [JsonPropertyName("genesisHash")]
+        public string GenesisHash { get; set; }
+
+        /// <summary>
+        /// Is hardware wallet
+        /// </summary>
+        [JsonPropertyName("isHardware")]
+        public bool IsHardware { get; set; }
+
+        /// <summary>
+        /// Name of the wallet
+        /// </summary>
+        [JsonPropertyName("name")]
+        public string Name { get; set; }
+
+        /// <summary>
+        /// Tags
+        /// </summary>
+        [JsonPropertyName("tags")]
+        public List<object> Tags { get; set; }
+
+        /// <summary>
+        /// When created
+        /// </summary>
+        [JsonPropertyName("whenCreated")]
+        public long WhenCreated { get; set; }
     }
 }
