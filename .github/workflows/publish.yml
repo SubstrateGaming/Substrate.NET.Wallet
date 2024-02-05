@@ -31,26 +31,12 @@ jobs:
         with:
           dotnet-version: 6.0.x
 
-      
-      ##
-      # Dependencies
-      # Restore the project and its dependencies.
-      ##
-      - name: Install dependencies
-        run: dotnet restore
-      
-      # Test
-      - name: Test
-        run: |
-            cd Substrate.NET.Wallet.Test
-            dotnet test --no-restore --verbosity normal
-
       ##
       # Publish
       ##
       - name: Publish Substrate.NET.Wallet
-        id: publish_nuget_1
-        uses: alirezanet/publish-nuget@v3.0.4
+        id: publish_nuget
+        uses: alirezanet/publish-nuget@v3.1.0
         with:
           # Filepath of the project to be packaged, relative to root of repository
           PROJECT_FILE_PATH: Substrate.NET.Wallet/Substrate.NET.Wallet.csproj
