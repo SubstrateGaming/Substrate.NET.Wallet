@@ -203,7 +203,7 @@ namespace Substrate.NET.Wallet.Keyring
 
         public static byte[] JsonDecryptData(string password, byte[] encrypted, List<WalletJson.EncryptedJsonEncoding> encryptedEncoding)
         {
-            ensureDataIsSet(encrypted);
+            EnsureDataIsSet(encrypted);
 
             if (encryptedEncoding.Any(x => x == WalletJson.EncryptedJsonEncoding.Xsalsa20Poly1305) && string.IsNullOrEmpty(password))
                 throw new InvalidOperationException("Password require to encrypt data");
@@ -244,10 +244,6 @@ namespace Substrate.NET.Wallet.Keyring
 
                 case KeyType.Sr25519:
                     var miniSecret = new MiniSecret(seed, ExpandMode.Ed25519);
-                    var concatenated = miniSecret.GetPair().ToHalfEd25519Bytes();
-                    var publicKey = concatenated.SubArray(Keys.SECRET_KEY_LENGTH, Keys.SECRET_KEY_LENGTH + Keys.PUBLIC_KEY_LENGTH);
-                    var secretKey = concatenated.SubArray(0, Keys.SECRET_KEY_LENGTH);
-
                     return new PairInfo(miniSecret.ExpandToPublic().Key, miniSecret.ExpandToSecret().ToEd25519Bytes());
 
                 default:
@@ -255,28 +251,7 @@ namespace Substrate.NET.Wallet.Keyring
             }
         }
 
-        public static bool IsMnemonicPhraseValid(string[] mnemonic, Mnemonic.BIP39Wordlist language = Mnemonic.BIP39Wordlist.English)
-            => IsMnemonicPhraseValid(string.Join(" ", mnemonic), language);
-
-        public static bool IsMnemonicPhraseValid(string mnemonic, Mnemonic.BIP39Wordlist language = Mnemonic.BIP39Wordlist.English)
-        {
-            if (string.IsNullOrEmpty(mnemonic)) return false;
-
-            var words = mnemonic.Split(' ');
-
-            // Mnemonic size should be equal to 12, 15, 18, 21 or 24 words
-            if (
-                new byte[5] { 12, 15, 18, 21, 24 }.Any(l => l == words.Length) &&
-                words.All(p => p.Length > 2) &&
-                Mnemonic.ValidateMnemonic(mnemonic, language))
-            {
-                return true;
-            }
-
-            return false;
-        }
-
-        private static void ensureDataIsSet(byte[] data, string message = "No data available")
+        private static void EnsureDataIsSet(byte[] data, string message = "No data available")
         {
             if (data is null || !data.Any())
                 throw new ArgumentException(string.IsNullOrEmpty(message) ? "No data available" : message);

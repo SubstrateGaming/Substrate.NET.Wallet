@@ -2,6 +2,7 @@
 using Substrate.NET.Wallet.Derivation;
 using Substrate.NET.Wallet.Extensions;
 using Substrate.NetApi;
+using Substrate.NetApi.Model.Meta;
 using Substrate.NetApi.Model.Types;
 using System;
 using System.Collections.Generic;
@@ -10,14 +11,35 @@ using System.Text.RegularExpressions;
 
 namespace Substrate.NET.Wallet.Keyring
 {
+    /// <summary>
+    /// URI
+    /// </summary>
     public static class Uri
     {
+        /// <summary>
+        /// DEV PHRASE
+        /// </summary>
         public const string DEV_PHRASE = "bottom drive obey lake curtain smoke basket hold race lonely fit walk";
+        /// <summary>
+        /// DEV SEED
+        /// </summary>
         public const string DEV_SEED = "0xfac7959dbfe72f052e5a0c3c8d6530f202b02fd8f9f5ca3580ec8deb7797479e";
 
+        /// <summary>
+        /// Capture URI pattern
+        /// </summary>
         public const string CaptureUriPattern = "^(\\w+( \\w+)*)((\\/\\/?[^\\/]+)*)(\\/\\/\\/(.*))?$";
+        /// <summary>
+        /// Capture junction pattern
+        /// </summary>
         public const string CaptureJunctionPattern = "\\/(\\/?)([^/]+)";
 
+        /// <summary>
+        /// Key extract uri
+        /// </summary>
+        /// <param name="suri"></param>
+        /// <returns></returns>
+        /// <exception cref="InvalidOperationException"></exception>
         public static KeyExtractResult KeyExtractUri(string suri)
         {
             var match = Regex.Match(suri, CaptureUriPattern, RegexOptions.None, TimeSpan.FromMilliseconds(100));
@@ -38,6 +60,12 @@ namespace Substrate.NET.Wallet.Keyring
             };
         }
 
+        /// <summary>
+        /// Key extract path
+        /// </summary>
+        /// <param name="derivePath"></param>
+        /// <returns></returns>
+        /// <exception cref="InvalidOperationException"></exception>
         public static KeyExtractPathResult KeyExtractPath(string derivePath)
         {
             var matches = Regex.Matches(derivePath, CaptureJunctionPattern, RegexOptions.None, TimeSpan.FromMilliseconds(100));
@@ -69,6 +97,13 @@ namespace Substrate.NET.Wallet.Keyring
             };
         }
 
+        /// <summary>
+        /// Key from path
+        /// </summary>
+        /// <param name="pair"></param>
+        /// <param name="paths"></param>
+        /// <param name="keyType"></param>
+        /// <returns></returns>
         public static PairInfo KeyFromPath(PairInfo pair, IList<DeriveJunction> paths, KeyType keyType)
         {
             foreach (var path in paths)
@@ -78,6 +113,15 @@ namespace Substrate.NET.Wallet.Keyring
             return pair;
         }
 
+        /// <summary>
+        /// Create derive
+        /// </summary>
+        /// <param name="keyType"></param>
+        /// <param name="path"></param>
+        /// <param name="pair"></param>
+        /// <returns></returns>
+        /// <exception cref="InvalidOperationException"></exception>
+        /// <exception cref="NotImplementedException"></exception>
         private static PairInfo CreateDerive(KeyType keyType, DeriveJunction path, PairInfo pair)
         {
             var keyPair = KeyPair.FromHalfEd25519Bytes(pair.ToBytes());
@@ -109,12 +153,25 @@ namespace Substrate.NET.Wallet.Keyring
             throw new NotImplementedException();
         }
 
+        /// <summary>
+        /// Sr25519 derive hard
+        /// </summary>
+        /// <param name="seed"></param>
+        /// <param name="chainCode"></param>
+        /// <returns></returns>
         public static byte[] Sr25519DeriveHard(byte[] seed, byte[] chainCode)
         {
             var miniSecret = new MiniSecret(seed, ExpandMode.Ed25519);
             return Sr25519DeriveHard(miniSecret.GetPair(), chainCode);
         }
 
+        /// <summary>
+        /// Sr25519 derive hard
+        /// </summary>
+        /// <param name="pair"></param>
+        /// <param name="chainCode"></param>
+        /// <returns></returns>
+        /// <exception cref="InvalidOperationException"></exception>
         public static byte[] Sr25519DeriveHard(KeyPair pair, byte[] chainCode)
         {
             if (chainCode.Length != 32)
@@ -125,12 +182,25 @@ namespace Substrate.NET.Wallet.Keyring
             return miniSecretderived.GetPair().ToHalfEd25519Bytes();
         }
 
+        /// <summary>
+        /// Sr25519 derive soft
+        /// </summary>
+        /// <param name="seed"></param>
+        /// <param name="chainCode"></param>
+        /// <returns></returns>
         public static byte[] Sr25519DeriveSoft(byte[] seed, byte[] chainCode)
         {
             var miniSecret = new MiniSecret(seed, ExpandMode.Ed25519);
             return Sr25519DeriveSoft(miniSecret.GetPair(), chainCode);
         }
 
+        /// <summary>
+        /// Sr25519 derive soft
+        /// </summary>
+        /// <param name="pair"></param>
+        /// <param name="chainCode"></param>
+        /// <returns></returns>
+        /// <exception cref="InvalidOperationException"></exception>
         public static byte[] Sr25519DeriveSoft(KeyPair pair, byte[] chainCode)
         {
             if (chainCode.Length != 32)
@@ -153,7 +223,7 @@ namespace Substrate.NET.Wallet.Keyring
             var HDKS = DeriveJunction.CompactAddLength(System.Text.Encoding.UTF8.GetBytes("Ed25519HDKD"));
 
             var all = HDKS.Concat(seed).Concat(chainCode).ToArray();
-            var res = HashExtension.Hash(NetApi.Model.Meta.Storage.Hasher.BlakeTwo256, all);
+            var res = HashExtension.Hash(Storage.Hasher.BlakeTwo256, all);
 
             return res;
         }

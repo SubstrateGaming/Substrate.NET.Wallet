@@ -7,6 +7,7 @@ using System.Numerics;
 namespace Substrate.NET.Wallet.Keyring
 {
     /// <summary>
+    /// Scrypt
     /// https://github.com/viniciuschiele/Scrypt/tree/master
     /// </summary>
     public static class Scrypt
@@ -20,16 +21,24 @@ namespace Substrate.NET.Wallet.Keyring
         public static ScryptResult FromBytes(byte[] data)
         {
             var salt = data.SubArray(0, 32);
-            BigInteger N = new BigInteger(data.SubArray(32 + 0, 32 + 4));
-            BigInteger p = new BigInteger(data.SubArray(32 + 4, 32 + 8));
-            BigInteger r = new BigInteger(data.SubArray(32 + 8, 32 + 12));
+            var N = new BigInteger(data.SubArray(32 + 0, 32 + 4));
+            var p = new BigInteger(data.SubArray(32 + 4, 32 + 8));
+            var r = new BigInteger(data.SubArray(32 + 8, 32 + 12));
 
             if (N != ScryptParam.Default.IterationCount || p != ScryptParam.Default.ThreadCount || r != ScryptParam.Default.BlockSize)
+            {
                 throw new InvalidOperationException("Invalid Scrypt params");
+            }
 
             return new ScryptResult(new ScryptParam(N, p, r), salt);
         }
 
+        /// <summary>
+        ///
+        /// </summary>
+        /// <param name="salt"></param>
+        /// <param name="param"></param>
+        /// <returns></returns>
         public static byte[] ToBytes(byte[] salt, ScryptParam param)
         {
             return salt
@@ -66,24 +75,52 @@ namespace Substrate.NET.Wallet.Keyring
         }
     }
 
+    /// <summary>
+    /// Scrypt result
+    /// </summary>
     public class ScryptResult
     {
+        /// <summary>
+        /// Scrypt result constructor
+        /// </summary>
+        /// <param name="param"></param>
+        /// <param name="salt"></param>
         public ScryptResult(ScryptParam param, byte[] salt)
         {
             Param = param;
             Salt = salt;
         }
 
+        /// <summary>
+        /// Scrypt result constructor
+        /// </summary>
+        /// <param name="param"></param>
+        /// <param name="salt"></param>
+        /// <param name="password"></param>
         public ScryptResult(ScryptParam param, byte[] salt, byte[] password) : this(param, salt)
         {
             Password = password;
         }
 
+        /// <summary>
+        /// Scrypt param
+        /// </summary>
         public ScryptParam Param { get; }
+
+        /// <summary>
+        /// Salt
+        /// </summary>
         public byte[] Salt { get; }
+
+        /// <summary>
+        /// Password
+        /// </summary>
         public byte[] Password { get; }
     }
 
+    /// <summary>
+    /// Scrypt param
+    /// </summary>
     public class ScryptParam
     {
         /// <summary>
@@ -101,6 +138,12 @@ namespace Substrate.NET.Wallet.Keyring
         /// </summary>
         public BigInteger BlockSize { get; }
 
+        /// <summary>
+        /// Scrypt param constructor
+        /// </summary>
+        /// <param name="iterationCount"></param>
+        /// <param name="threadCount"></param>
+        /// <param name="blockSize"></param>
         public ScryptParam(BigInteger iterationCount, BigInteger threadCount, BigInteger blockSize)
         {
             IterationCount = iterationCount;
@@ -113,12 +156,10 @@ namespace Substrate.NET.Wallet.Keyring
         /// </summary>
         public static ScryptParam Default { get; set; } = new ScryptParam(1 << 15, 1, 8);
 
-        public byte[] ToBytes()
-        {
-            return new byte[4] { 0, 128, 0, 0 }
-            .Concat(new byte[4] { 1, 0, 0, 0 })
-            .Concat(new byte[4] { 8, 0, 0, 0 })
-            .ToArray();
-        }
+        /// <summary>
+        /// To bytes
+        /// </summary>
+        /// <returns></returns>
+        public byte[] ToBytes() => new byte[] { 0, 128, 0, 0, 1, 0, 0, 0, 8, 0, 0, 0 };
     }
 }

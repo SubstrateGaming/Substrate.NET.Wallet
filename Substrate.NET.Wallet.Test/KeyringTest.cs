@@ -213,38 +213,5 @@ namespace Substrate.NET.Wallet.Test
 
             Assert.That(keyPair.PublicKey, Is.EqualTo(expected));
         }
-
-        [Test]
-        [TestCase("bottom drive obey lake curtain smoke basket hold race lonely fit walk")]
-        public void MnemonicPhraseValid_ShouldSuceed(string mnemonic)
-        {
-            Assert.That(Keyring.Keyring.IsMnemonicPhraseValid(mnemonic), Is.True);
-
-            var randomMnemonic_12 = Mnemonic.GenerateMnemonic(Mnemonic.MnemonicSize.Words12);
-            Assert.That(Keyring.Keyring.IsMnemonicPhraseValid(randomMnemonic_12), Is.True);
-
-            var randomMnemonic_15 = Mnemonic.GenerateMnemonic(Mnemonic.MnemonicSize.Words15);
-            Assert.That(Keyring.Keyring.IsMnemonicPhraseValid(randomMnemonic_15), Is.True);
-
-            var randomMnemonic_18 = Mnemonic.GenerateMnemonic(Mnemonic.MnemonicSize.Words18);
-            Assert.That(Keyring.Keyring.IsMnemonicPhraseValid(randomMnemonic_18), Is.True);
-
-            var randomMnemonic_21 = Mnemonic.GenerateMnemonic(Mnemonic.MnemonicSize.Words21);
-            Assert.That(Keyring.Keyring.IsMnemonicPhraseValid(randomMnemonic_21), Is.True);
-
-            var randomMnemonic_24 = Mnemonic.GenerateMnemonic(Mnemonic.MnemonicSize.Words24);
-            Assert.That(Keyring.Keyring.IsMnemonicPhraseValid(randomMnemonic_24), Is.True);
-        }
-
-        [Test]
-        [TestCase("bobo drive obey lake curtain smoke basket hold race lonely fit walk")]
-        [TestCase("b d o l c s b h r l f w")]
-        [TestCase("string mnemonic obey lake curtain smoke basket hold race lonely fit walk")]
-        [TestCase("Hey i'm not good")]
-        [TestCase("")]
-        public void MnemonicPhraseInvalid_ShouldFail(string mnemonic)
-        {
-            Assert.That(Keyring.Keyring.IsMnemonicPhraseValid(mnemonic), Is.False);
-        }
     }
 }

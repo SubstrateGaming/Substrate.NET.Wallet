@@ -3,23 +3,30 @@ using System.Collections.Generic;
 
 namespace Substrate.NET.Wallet.Keyring
 {
+    /// <summary>
+    /// PKCS8
+    /// </summary>
     public static class Pkcs8
     {
+        /// <summary>
+        /// Decode
+        /// </summary>
+        /// <param name="password"></param>
+        /// <param name="encoded"></param>
+        /// <param name="encryptedEncoding"></param>
+        /// <returns></returns>
         public static PairInfo Decode(string password, byte[] encoded, List<WalletJson.EncryptedJsonEncoding> encryptedEncoding)
         {
             var decoded = Pair.DecodePair(password, encoded, encryptedEncoding);
 
-            PairInfo res = null;
+            PairInfo res;
             if (decoded.SecretKey.Length == 64)
             {
                 res = new PairInfo(decoded.PublicKey, decoded.SecretKey);
             }
             else
             {
-                byte[] privateKey;
-                byte[] publicKey;
-                Chaos.NaCl.Ed25519.KeyPairFromSeed(out publicKey, out privateKey, encoded);
-
+                Chaos.NaCl.Ed25519.KeyPairFromSeed(out byte[] publicKey, out byte[] privateKey, encoded);
                 res = new PairInfo(publicKey, privateKey);
             }
 
@@ -31,7 +38,6 @@ namespace Substrate.NET.Wallet.Keyring
         /// </summary>
         /// <param name="password"></param>
         /// <param name="encoded"></param>
-        /// <param name="pair"></param>
         /// <param name="encryptionType"></param>
         /// <returns></returns>
         /// <exception cref="InvalidOperationException"></exception>
