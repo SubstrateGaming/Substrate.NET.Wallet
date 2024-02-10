@@ -4,7 +4,9 @@
 [![Nuget](https://img.shields.io/nuget/v/Substrate.NET.Wallet)](https://www.nuget.org/packages/Substrate.NET.Wallet/)
 [![GitHub issues](https://img.shields.io/github/issues/SubstrateGaming/Substrate.NET.Wallet.svg)](https://github.com/SubstrateGaming/Substrate.NET.Wallet/issues)
 [![license](https://img.shields.io/github/license/SubstrateGaming/Substrate.NET.Wallet)](https://github.com/SubstrateGaming/Substrate.NET.Wallet/blob/origin/LICENSE)
-[![contributors](https://img.shields.io/github/contributors/SubstrateGaming/Substrate.NET.Wallet)](https://github.com/SubstrateGaming/Substrate.NET.Wallet/graphs/contributors)  
+[![contributors](https://img.shields.io/github/contributors/SubstrateGaming/Substrate.NET.Wallet)](https://github.com/SubstrateGaming/Substrate.NET.Wallet/graphs/contributors)
+[![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=SubstrateGaming_Substrate.NET.Wallet&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=SubstrateGaming_Substrate.NET.Wallet)  
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=SubstrateGaming_Substrate.NET.Wallet&metric=coverage)](https://sonarcloud.io/summary/new_code?id=SubstrateGaming_Substrate.NET.Wallet)
  
 ## How to use ?
 
