@@ -127,6 +127,15 @@ namespace Substrate.NET.Wallet.Test.Keyrings
         }
 
         [Test]
+        public void KeyExtractPath_EdgeCase()
+        {
+            var res = Uri.KeyExtractPath("//0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF");
+
+            Assert.That(res.Path.Count, Is.EqualTo(1));
+            Assert.That(res.Path[0].IsHard, Is.True);
+        }
+
+        [Test]
         public void KeyExtractUri_DeriveMultiple_Alice()
         {
             var res = Uri.KeyExtractUri("bottom drive obey lake curtain smoke basket hold race lonely fit walk//Alice");
@@ -158,6 +167,7 @@ namespace Substrate.NET.Wallet.Test.Keyrings
             Assert.That(res.Parts, Is.EqualTo(new string[1] { "//1" }));
             Assert.That(res.Path.Count, Is.EqualTo(1));
             Assert.That(res.Path[0].IsHard, Is.EqualTo(true));
+            Assert.That(res.Path[0].IsSoft, Is.EqualTo(false));
             Assert.That(res.Path[0].ChainCode, Is.EqualTo(new byte[] { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }));
         }
 
