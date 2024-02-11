@@ -102,7 +102,7 @@ namespace Substrate.NET.Wallet.Keyring
                 throw new InvalidOperationException("Secret key has to be set");
             }
 
-            var encoded = PKCS8_HEADER.Concat(pair.PrivateKey).Concat(PKCS8_DIVIDER).Concat(pair.PrivateKey).ToArray();
+            var encoded = PKCS8_HEADER.Concat(pair.PrivateKey).Concat(PKCS8_DIVIDER).Concat(pair.Bytes).ToArray();
 
             if (string.IsNullOrEmpty(password))
                 return encoded;

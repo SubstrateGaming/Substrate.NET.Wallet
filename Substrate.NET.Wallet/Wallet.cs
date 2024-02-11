@@ -217,7 +217,7 @@ namespace Substrate.NET.Wallet
         /// <returns></returns>
         public byte[] Recode(string password)
         {
-            return Pair.EncodePair(password, Account);
+            return Pair.EncodePair(password, Account.Clone());
         }
 
         /// <summary>
@@ -247,7 +247,7 @@ namespace Substrate.NET.Wallet
                 throw new InvalidOperationException($"Soft derivation paths are not allowed on {KeyType}");
             }
 
-            var derived = Keyring.Uri.KeyFromPath(Account, res.Path, KeyType);
+            var derived = Keyring.Uri.KeyFromPath(Account.Clone(), res.Path, KeyType);
 
             return Pair.CreatePair(new KeyringAddress(KeyType), derived, Meta, null, EncryptedEncoding, Keyring.Keyring.DEFAULT_SS58);
         }

@@ -58,7 +58,7 @@ namespace Substrate.NET.Wallet.Test
 
             // Create a new random wallet
             var wallet = keyring.AddFromMnemonic(
-                Mnemonic.GenerateMnemonic(MnemonicSize.Words12), 
+                "roof mistake impose organ census holiday wrist boring rough quality place divorce".Split(" "), 
                 new Meta(), 
                 KeyType.Sr25519);
 
