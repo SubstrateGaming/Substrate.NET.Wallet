@@ -81,7 +81,7 @@ namespace Substrate.NET.Wallet.Keyring
 
             var keyringPair = Pair.CreatePair(
                 new KeyringAddress(keyType),
-                new PairInfo(publicKey, new byte[32]),
+                Account.Build(keyType,null, publicKey),
                 meta, encoded, encryptedEncoding, Ss58Format);
 
             AddWallet(keyringPair);
@@ -118,7 +118,7 @@ namespace Substrate.NET.Wallet.Keyring
 
         public Wallet AddFromSeed(byte[] seed, Meta meta, KeyType keyType)
         {
-            var pair = Pair.CreatePair(new KeyringAddress(keyType), KeyPairFromSeed(keyType, seed), meta, null, null, Ss58Format);
+            var pair = Pair.CreatePair(new KeyringAddress(keyType), Account.FromSeed(keyType, seed), meta, null, null, Ss58Format);
             AddWallet(pair);
 
             return pair;
@@ -127,6 +127,7 @@ namespace Substrate.NET.Wallet.Keyring
         #endregion Add methods
 
         #region Create method
+
         internal static Wallet CreateFromJson(WalletFile walletEncryption, short Ss58Format)
         {
             if (walletEncryption == null) throw new ArgumentNullException(nameof(walletEncryption));
@@ -145,7 +146,7 @@ namespace Substrate.NET.Wallet.Keyring
 
             return Pair.CreatePair(
                 new KeyringAddress(keyType),
-                new PairInfo(publicKey, null),
+                Account.Build(keyType, null, publicKey),
                 walletEncryption.Meta, encoded, encryptedEncoding, Ss58Format);
         }
 
@@ -153,7 +154,7 @@ namespace Substrate.NET.Wallet.Keyring
         {
             var (extract, seed) = CreateSeedFromUri(uri);
 
-            var derivedPair = Uri.KeyFromPath(KeyPairFromSeed(keyType, seed), extract.Path, keyType);
+            var derivedPair = Uri.KeyFromPath(Account.FromSeed(keyType, seed), extract.Path, keyType);
 
             return Pair.CreatePair(new KeyringAddress(keyType), derivedPair, meta, null, null, Ss58Format);
         }
@@ -203,10 +204,15 @@ namespace Substrate.NET.Wallet.Keyring
 
         public static byte[] JsonDecryptData(string password, byte[] encrypted, List<WalletJson.EncryptedJsonEncoding> encryptedEncoding)
         {
-            EnsureDataIsSet(encrypted);
+            if (encrypted is null || !encrypted.Any())
+            {
+                throw new ArgumentException("No data available");
+            }
 
-            if (encryptedEncoding.Any(x => x == WalletJson.EncryptedJsonEncoding.Xsalsa20Poly1305) && string.IsNullOrEmpty(password))
+            if (encryptedEncoding.Exists(x => x == WalletJson.EncryptedJsonEncoding.Xsalsa20Poly1305) && string.IsNullOrEmpty(password))
+            {
                 throw new InvalidOperationException("Password require to encrypt data");
+            }
 
             var encoded = encrypted;
             if (!string.IsNullOrEmpty(password))
@@ -249,12 +255,6 @@ namespace Substrate.NET.Wallet.Keyring
                 default:
                     throw new NotImplementedException($"KeyType {keyType} isn't implemented!");
             }
-        }
-
-        private static void EnsureDataIsSet(byte[] data, string message = "No data available")
-        {
-            if (data is null || !data.Any())
-                throw new ArgumentException(string.IsNullOrEmpty(message) ? "No data available" : message);
         }
 
         #endregion Utility methods
