@@ -110,16 +110,8 @@ namespace Substrate.NET.Wallet
             get
             {
                 if (FileName == null) return false;
-                try
-                {
-                    return Caching.TryReadFile(ConcatWalletFileType(FileName), out WalletFile _);
-                }
-                catch (Exception)
-                {
-                    Logger.Warning($"Caching error, please check all {nameof(SystemInteraction)} properties are set");
-                }
 
-                return false;
+                return Caching.TryReadFile(ConcatWalletFileType(FileName), out WalletFile _);
             }
         }
 
@@ -256,7 +248,7 @@ namespace Substrate.NET.Wallet
         public Wallet Derive(string sUri, Meta meta)
         {
             if (!IsUnlocked)
-                throw new InvalidCastException("Cannot derive on a locked account");
+                throw new InvalidOperationException("Cannot derive on a locked account");
 
             var res = Keyring.Uri.KeyExtractPath(sUri);
 
