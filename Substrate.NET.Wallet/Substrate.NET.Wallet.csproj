@@ -29,9 +29,8 @@
 	</ItemGroup>
 
 	<ItemGroup>
-    <PackageReference Include="CryptSharpStandard" Version="1.0.0" />
-	  <PackageReference Include="Substrate.NET.API" Version="0.9.18" />
-	  <PackageReference Include="Substrate.NET.Schnorrkel" Version="1.2.2" />
+	  <PackageReference Include="CryptSharpStandard" Version="1.0.0" />
+	  <PackageReference Include="Substrate.NET.API" Version="0.9.19" />
 	</ItemGroup>
 
 </Project>

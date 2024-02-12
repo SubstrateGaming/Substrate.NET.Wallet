@@ -3,8 +3,22 @@ using Substrate.NetApi.Model.Types;
 
 namespace Substrate.NET.Wallet.Extensions
 {
+    /// <summary>
+    /// Account extension methods
+    /// </summary>
     public static class AccountExtension
     {
-        public static PairInfo ToPair(this Account account) => new PairInfo(account.Bytes, account.PrivateKey);
+        /// <summary>
+        /// Clone an instance of an Account
+        /// </summary>
+        /// <param name="account"></param>
+        /// <returns></returns>
+        public static Account Clone(this Account account)
+        {
+            var clonedAccount = new Account();
+            clonedAccount.Create(account.KeyType, account.PrivateKey, account.Bytes);
+
+            return clonedAccount;
+        }
     }
 }
