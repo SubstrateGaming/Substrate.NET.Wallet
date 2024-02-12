@@ -33,12 +33,30 @@ namespace Substrate.NET.Wallet
         /// </summary>
         public byte[] Encoded { get; internal set; }
 
+        /// <summary>
+        /// Type of encoding
+        /// </summary>
         public List<WalletJson.EncryptedJsonEncoding> EncryptedEncoding { get; internal set; }
+
+        /// <summary>
+        /// The type of cryptographic keys used in digital signatures
+        /// </summary>
         public KeyType KeyType { get; internal set; }
+
+        /// <summary>
+        /// Wallet metadatas
+        /// </summary>
         public Meta Meta { get; internal set; }
+
+        /// <summary>
+        /// Wallet associated account
+        /// </summary>
         public Account Account { get; private set; }
-        public string FileName => Meta?.Name != null ? ConcatWalletFileType(Meta.Name) : string.Empty;
-        public WalletFile FileStore { get; private set; }
+
+        /// <summary>
+        /// Account file name
+        /// </summary>
+        public string FileName => Meta?.Name ?? string.Empty;
 
         /// <summary>
         /// Account name policy for this wallet
@@ -94,7 +112,7 @@ namespace Substrate.NET.Wallet
                 if (FileName == null) return false;
                 try
                 {
-                    return Caching.TryReadFile(FileName, out WalletFile _);
+                    return Caching.TryReadFile(ConcatWalletFileType(FileName), out WalletFile _);
                 }
                 catch (Exception)
                 {
