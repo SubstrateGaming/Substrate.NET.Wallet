@@ -1,6 +1,8 @@
 ﻿using NUnit.Framework;
+using Substrate.NET.Wallet.Keyring;
 using Substrate.NetApi;
 using Substrate.NetApi.Model.Types;
+using System;
 
 namespace Substrate.NET.Wallet.Test.Keyrings
 {
@@ -62,6 +64,24 @@ namespace Substrate.NET.Wallet.Test.Keyrings
 
             Assert.That(res.Account.Bytes, Is.EquivalentTo(Utils.HexToByteArray(expectedPublicKey)));
             Assert.That(res.Address, Is.EqualTo(expectedAddress));
+        }
+
+        [Test]
+        public void HardDerive_Ed25519_ShouldSuceed() {
+            var keyring = new Keyring.Keyring();
+            var wallet = keyring.AddFromMnemonic(Mnemonic.GenerateMnemonic(Mnemonic.MnemonicSize.Words12), new Meta() { Name = "My account name" }, KeyType.Ed25519);
+
+            var derivedWallet = wallet.Derive("//HardDerive");
+
+            Assert.That(wallet.Address, Is.Not.EqualTo(derivedWallet.Address));
+        }
+
+        [Test]
+        public void SoftDerive_Ed25519_ShouldFail() {
+            var keyring = new Keyring.Keyring();
+            var wallet = keyring.AddFromMnemonic(Mnemonic.GenerateMnemonic(Mnemonic.MnemonicSize.Words12), new Meta() { Name = "My account name" }, KeyType.Ed25519);
+
+            Assert.Throws<InvalidOperationException>(() => wallet.Derive("/SoftIsNotAllowed"));
         }
     }
 }

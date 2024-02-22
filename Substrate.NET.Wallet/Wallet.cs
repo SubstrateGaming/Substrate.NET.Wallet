@@ -33,12 +33,30 @@ namespace Substrate.NET.Wallet
         /// </summary>
         public byte[] Encoded { get; internal set; }
 
+        /// <summary>
+        /// Type of encoding
+        /// </summary>
         public List<WalletJson.EncryptedJsonEncoding> EncryptedEncoding { get; internal set; }
+
+        /// <summary>
+        /// The type of cryptographic keys used in digital signatures
+        /// </summary>
         public KeyType KeyType { get; internal set; }
+
+        /// <summary>
+        /// Wallet metadatas
+        /// </summary>
         public Meta Meta { get; internal set; }
+
+        /// <summary>
+        /// Wallet associated account
+        /// </summary>
         public Account Account { get; private set; }
-        public string FileName => Meta?.Name != null ? ConcatWalletFileType(Meta.Name) : string.Empty;
-        public WalletFile FileStore { get; private set; }
+
+        /// <summary>
+        /// Account file name
+        /// </summary>
+        public string FileName => Meta?.Name ?? string.Empty;
 
         /// <summary>
         /// Account name policy for this wallet
@@ -92,15 +110,8 @@ namespace Substrate.NET.Wallet
             get
             {
                 if (FileName == null) return false;
-                try
-                {
-                    return Caching.TryReadFile(FileName, out WalletFile _);
-                } catch(Exception)
-                {
-                    Logger.Warning($"Caching error, please check all {nameof(SystemInteraction)} properties are set");
-                }
 
-                return false;
+                return Caching.TryReadFile(ConcatWalletFileType(FileName), out WalletFile _);
             }
         }
 
@@ -122,9 +133,9 @@ namespace Substrate.NET.Wallet
 
             try
             {
-                var pair = Pkcs8.Decode(password, !Pair.IsLocked(userEncoded) ? userEncoded : Encoded, EncryptedEncoding);
-                Account = Account.Build(KeyType, pair.SecretKey, pair.PublicKey);
-            } catch(Exception ex)
+                Account = Pkcs8.Decode(password, !Pair.IsLocked(userEncoded) ? userEncoded : Encoded, EncryptedEncoding);
+            }
+            catch (Exception ex)
             {
                 Logger.Error($"Unable to unlock : {ex.Message}");
                 return false;
@@ -216,7 +227,7 @@ namespace Substrate.NET.Wallet
         /// <returns></returns>
         public byte[] Recode(string password)
         {
-            return Pair.EncodePair(password, Account.ToPair());
+            return Pair.EncodePair(password, Account.Clone());
         }
 
         /// <summary>
@@ -237,7 +248,7 @@ namespace Substrate.NET.Wallet
         public Wallet Derive(string sUri, Meta meta)
         {
             if (!IsUnlocked)
-                throw new InvalidCastException("Cannot derive on a locked account");
+                throw new InvalidOperationException("Cannot derive on a locked account");
 
             var res = Keyring.Uri.KeyExtractPath(sUri);
 
@@ -246,7 +257,7 @@ namespace Substrate.NET.Wallet
                 throw new InvalidOperationException($"Soft derivation paths are not allowed on {KeyType}");
             }
 
-            var derived = Keyring.Uri.KeyFromPath(Account.ToPair(), res.Path, KeyType);
+            var derived = Keyring.Uri.KeyFromPath(Account.Clone(), res.Path, KeyType);
 
             return Pair.CreatePair(new KeyringAddress(KeyType), derived, Meta, null, EncryptedEncoding, Keyring.Keyring.DEFAULT_SS58);
         }

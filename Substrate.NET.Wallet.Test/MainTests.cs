@@ -67,13 +67,12 @@ namespace Substrate.NET.Wallet.Test
 
             public Wallet GetWallet()
             {
+                var keyType = KeyType.Sr25519;
                 return Pair.CreatePair(
-                new KeyringAddress(KeyType.Sr25519),
-                new PairInfo(
-                    Utils.HexToByteArray(PublickKey),
-                    Utils.HexToByteArray(SecretKey)
-                    )
-                );
+                    new KeyringAddress(keyType),
+                    Account.Build(keyType, 
+                        Utils.HexToByteArray(SecretKey), 
+                        Utils.HexToByteArray(PublickKey)));
             }
         }
     }

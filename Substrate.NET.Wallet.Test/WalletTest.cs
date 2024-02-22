@@ -16,6 +16,7 @@ namespace Substrate.NET.Wallet.Test
 {
     public class WalletTest
     {
+        private Wallet randomWallet;
         [SetUp]
         public void Setup()
         {
@@ -25,6 +26,11 @@ namespace Substrate.NET.Wallet.Test
             SystemInteraction.ReadPersistent = f => File.ReadAllText(dir(f));
             SystemInteraction.PersistentExists = f => File.Exists(dir(f));
             SystemInteraction.Persist = (f, c) => File.WriteAllText(dir(f), c);
+
+            randomWallet = Keyring.Keyring.CreateFromUri(
+                string.Join(" ", Mnemonic.GenerateMnemonic(MnemonicSize.Words12)),
+                new Meta(),
+                KeyType.Sr25519, 42);
         }
 
         [Test]
@@ -82,6 +88,36 @@ namespace Substrate.NET.Wallet.Test
 
             Assert.That(loadedWallet.Account.Bytes, Is.EqualTo(wallet.Account.Bytes));
             Assert.That(loadedWallet.Account.PrivateKey, Is.EqualTo(wallet.Account.PrivateKey));
+        }
+
+        [Test]
+        public void WalletStored_WhenNoCachingSet_ShoudFail()
+        {
+            SystemInteraction.DataExists = f => false;
+            SystemInteraction.PersistentExists = f => false;
+
+            Assert.That(Wallet.TryLoad("test", out Wallet wallet), Is.False);
+        }
+
+        [Test]
+        public void WalletSign_WhenLock_ShoudFail()
+        {
+            randomWallet.Lock();
+            Assert.Throws<InvalidOperationException>(() => randomWallet.Sign("testMessage"));
+        }
+
+        [Test]
+        public void WalletVerify_WhenLock_ShoudFail()
+        {
+            randomWallet.Lock();
+            Assert.Throws<InvalidOperationException>(() => randomWallet.Verify(new byte[0], "testMessage"));
+        }
+
+        [Test]
+        public void WalletDerive_WhenLock_ShoudFail()
+        {
+            randomWallet.Lock();
+            Assert.Throws<InvalidOperationException>(() => randomWallet.Derive("testDerive"));
         }
     }
 }

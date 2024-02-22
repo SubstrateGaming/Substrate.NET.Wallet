@@ -35,10 +35,6 @@ namespace Substrate.NET.Wallet.Keyring
         public byte[] PublicKey { get; set; }
         public byte[] SecretKey { get; set; }
 
-        public byte[] ToBytes()
-        {
-            return SecretKey.Concat(PublicKey).ToArray();
-        }
     }
 
     public static class Pair
@@ -60,8 +56,8 @@ namespace Substrate.NET.Wallet.Keyring
             WalletJson.EncryptedToString(WalletJson.EncryptedJsonEncoding.Xsalsa20Poly1305),
         };
 
-        public static Wallet CreatePair(KeyringAddress setup, PairInfo pair)
-            => CreatePair(setup, pair, meta: null, encoded: null, encryptedEncoding: null, ss58Format: 42);
+        public static Wallet CreatePair(KeyringAddress setup, Account account)
+            => CreatePair(setup, account, meta: null, encoded: null, encryptedEncoding: null, ss58Format: 42);
 
         /// <summary>
         /// https://github.com/polkadot-js/common/blob/master/packages/keyring/src/pair/index.ts#L89
@@ -73,9 +69,9 @@ namespace Substrate.NET.Wallet.Keyring
         /// <param name="decoded"></param>
         /// <param name="encryptedEncoding"></param>
         /// <returns></returns>
-        public static Wallet CreatePair(KeyringAddress setup, PairInfo pair, Meta meta, byte[] encoded, List<WalletJson.EncryptedJsonEncoding> encryptedEncoding, short ss58Format)
+        public static Wallet CreatePair(KeyringAddress setup, Account account, Meta meta, byte[] encoded, List<WalletJson.EncryptedJsonEncoding> encryptedEncoding, short ss58Format)
         {
-            return new Wallet(setup.ToSS58(pair.PublicKey, ss58Format), encoded, meta, pair.PublicKey, pair.SecretKey, setup.KeyType, encryptedEncoding);
+            return new Wallet(setup.ToSS58(account.Bytes, ss58Format), encoded, meta, account.Bytes, account.PrivateKey, setup.KeyType, encryptedEncoding);
         }
 
         public static PairInfo DecodePair(string password, byte[] encoded, List<WalletJson.EncryptedJsonEncoding> encryptionType)
@@ -99,12 +95,14 @@ namespace Substrate.NET.Wallet.Keyring
             return new PairInfo(publicKey, secretKey);
         }
 
-        public static byte[] EncodePair(string password, PairInfo pair)
+        public static byte[] EncodePair(string password, Account pair)
         {
-            if (IsLocked(pair.SecretKey))
+            if (IsLocked(pair.PrivateKey))
+            {
                 throw new InvalidOperationException("Secret key has to be set");
+            }
 
-            var encoded = PKCS8_HEADER.Concat(pair.SecretKey).Concat(PKCS8_DIVIDER).Concat(pair.PublicKey).ToArray();
+            var encoded = PKCS8_HEADER.Concat(pair.PrivateKey).Concat(PKCS8_DIVIDER).Concat(pair.Bytes).ToArray();
 
             if (string.IsNullOrEmpty(password))
                 return encoded;

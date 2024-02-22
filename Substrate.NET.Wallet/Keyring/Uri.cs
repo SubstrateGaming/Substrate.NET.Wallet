@@ -1,4 +1,5 @@
-﻿using Substrate.NET.Schnorrkel.Keys;
+﻿using Substrate.NET.Schnorrkel;
+using Substrate.NET.Schnorrkel.Keys;
 using Substrate.NET.Wallet.Derivation;
 using Substrate.NET.Wallet.Extensions;
 using Substrate.NetApi;
@@ -20,6 +21,7 @@ namespace Substrate.NET.Wallet.Keyring
         /// DEV PHRASE
         /// </summary>
         public const string DEV_PHRASE = "bottom drive obey lake curtain smoke basket hold race lonely fit walk";
+
         /// <summary>
         /// DEV SEED
         /// </summary>
@@ -29,6 +31,7 @@ namespace Substrate.NET.Wallet.Keyring
         /// Capture URI pattern
         /// </summary>
         public const string CaptureUriPattern = "^(\\w+( \\w+)*)((\\/\\/?[^\\/]+)*)(\\/\\/\\/(.*))?$";
+
         /// <summary>
         /// Capture junction pattern
         /// </summary>
@@ -104,7 +107,7 @@ namespace Substrate.NET.Wallet.Keyring
         /// <param name="paths"></param>
         /// <param name="keyType"></param>
         /// <returns></returns>
-        public static PairInfo KeyFromPath(PairInfo pair, IList<DeriveJunction> paths, KeyType keyType)
+        public static Account KeyFromPath(Account pair, IList<DeriveJunction> paths, KeyType keyType)
         {
             foreach (var path in paths)
             {
@@ -122,9 +125,9 @@ namespace Substrate.NET.Wallet.Keyring
         /// <returns></returns>
         /// <exception cref="InvalidOperationException"></exception>
         /// <exception cref="NotImplementedException"></exception>
-        private static PairInfo CreateDerive(KeyType keyType, DeriveJunction path, PairInfo pair)
+        private static Account CreateDerive(KeyType keyType, DeriveJunction path, Account pair)
         {
-            var keyPair = KeyPair.FromHalfEd25519Bytes(pair.ToBytes());
+            var keyPair = KeyPair.FromHalfEd25519Bytes(pair.PrivateKey.Concat(pair.Bytes).ToArray());
 
             switch (keyType)
             {
@@ -133,21 +136,19 @@ namespace Substrate.NET.Wallet.Keyring
                         Sr25519DeriveHard(keyPair, path.ChainCode) :
                         Sr25519DeriveSoft(keyPair, path.ChainCode);
 
-                    return new PairInfo(
-                        res.SubArray(Keys.SECRET_KEY_LENGTH, Keys.SECRET_KEY_LENGTH + Keys.PUBLIC_KEY_LENGTH),
-                        res.SubArray(0, Keys.SECRET_KEY_LENGTH));
+                    return Account.Build(keyType,
+                        res.SubArray(0, Keys.SECRET_KEY_LENGTH),
+                        res.SubArray(Keys.SECRET_KEY_LENGTH, Keys.SECRET_KEY_LENGTH + Keys.PUBLIC_KEY_LENGTH));
 
                 case KeyType.Ed25519:
-                    if (path.IsHard)
+
+                    if (!path.IsHard)
                     {
-                        return Keyring.KeyPairFromSeed(
-                            KeyType.Ed25519,
-                            Ed25519DeriveHard(pair.SecretKey, path.ChainCode));
+                        throw new InvalidOperationException($"Soft derivation paths are not allowed on {keyType}");
                     }
-                    else
-                    {
-                        throw new InvalidOperationException($"Soft derivation paths are not allowed on {KeyType.Ed25519}");
-                    }
+
+                    return Account.FromSeed(keyType,
+                        Ed25519DeriveHard(pair.PrivateKey, path.ChainCode));
             }
 
             throw new NotImplementedException();

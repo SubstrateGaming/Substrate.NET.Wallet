@@ -8,16 +8,42 @@ using System.Text.RegularExpressions;
 
 namespace Substrate.NET.Wallet.Derivation
 {
+    /// <summary>
+    /// Analyse a derivation phrase and categorize it as soft and hard derivation
+    /// </summary>
     public class DeriveJunction
     {
+        /// <summary>
+        /// Junction id lenght
+        /// </summary>
         public const int JUNCTION_ID_LEN = 32;
+
+        /// <summary>
+        /// Regex number pattern
+        /// </summary>
         public const string NUMBER_PATTERN = "^\\d+$";
 
+        /// <summary>
+        /// Return true if it is a hard derivation (starts with //)
+        /// </summary>
         public bool IsHard { get; internal set; }
+
+        /// <summary>
+        /// Return true if it is a soft derivation (starts with //)
+        /// </summary>
         public bool IsSoft => !IsHard;
+
+        /// <summary>
+        /// Represents the chain code associated with the junction
+        /// </summary>
         public byte[] ChainCode { get; internal set; }
 
-        public static byte[] CompactAddLength(byte[] input)
+        /// <summary>
+        /// Add lenght as first byte
+        /// </summary>
+        /// <param name="input"></param>
+        /// <returns></returns>
+        internal static byte[] CompactAddLength(byte[] input)
         {
             var u256 = new U256(input.Length);
             var lenghtCompact = new CompactInteger(u256);
@@ -29,17 +55,31 @@ namespace Substrate.NET.Wallet.Derivation
             return compacted.ToArray();
         }
 
+        /// <summary>
+        /// Harden the given string
+        /// </summary>
+        /// <param name="value"></param>
+        /// <returns></returns>
         public DeriveJunction Hard(string value)
         {
             return Soft(value).Harden();
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
         public DeriveJunction Harden()
         {
             IsHard = true;
             return this;
         }
 
+        /// <summary>
+        /// Soft the given byte array
+        /// </summary>
+        /// <param name="value"></param>
+        /// <returns></returns>
         public DeriveJunction Soft(byte[] value)
         {
             if (value.Length > JUNCTION_ID_LEN)
@@ -52,11 +92,21 @@ namespace Substrate.NET.Wallet.Derivation
             return this;
         }
 
+        /// <summary>
+        /// Soft the given number
+        /// </summary>
+        /// <param name="value"></param>
+        /// <returns></returns>
         public DeriveJunction Soft(BigInteger value)
         {
             return Soft(value.ToByteArray());
         }
 
+        /// <summary>
+        /// Soft the given string
+        /// </summary>
+        /// <param name="value"></param>
+        /// <returns></returns>
         public DeriveJunction Soft(string value)
         {
             if (value.IsHex())
@@ -65,12 +115,22 @@ namespace Substrate.NET.Wallet.Derivation
             return Soft(CompactAddLength(value.ToBytes()));
         }
 
+        /// <summary>
+        /// Return a soft representation
+        /// </summary>
+        /// <returns></returns>
         public DeriveJunction Soften()
         {
             IsHard = false;
             return this;
         }
 
+        /// <summary>
+        /// Create a <see cref="DeriveJunction"/> instance from a derivation string
+        /// </summary>
+        /// <param name="p"></param>
+        /// <returns></returns>
+        /// <exception cref="InvalidOperationException"></exception>
         public static DeriveJunction From(string p)
         {
             var result = new DeriveJunction();

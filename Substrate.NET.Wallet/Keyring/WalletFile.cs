@@ -16,17 +16,17 @@ namespace Substrate.NET.Wallet.Keyring
         public enum EncryptedJsonEncoding
         {
             /// <summary>
-            /// None
+            /// No encoding
             /// </summary>
             None,
 
             /// <summary>
-            /// Scrypt
+            /// Scrypt encoding
             /// </summary>
             Scrypt,
 
             /// <summary>
-            /// Xsalsa20Poly1305
+            /// Xsalsa20Poly1305 encoding
             /// </summary>
             Xsalsa20Poly1305
         }
