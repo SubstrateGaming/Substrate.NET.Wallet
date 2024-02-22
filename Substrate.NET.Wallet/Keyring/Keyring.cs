@@ -222,7 +222,7 @@ namespace Substrate.NET.Wallet.Keyring
                 {
                     var scryptRes = Scrypt.FromBytes(encoded);
                     passwordBytes = Scrypt.ScryptEncode(password, scryptRes.Salt, scryptRes.Param).Password;
-                    encrypted = encrypted.SubArray(SCRYPT_LENGTH);
+                    encrypted = encrypted.AsSpan().Slice(SCRYPT_LENGTH).ToArray();
                 }
 
                 encoded = Chaos.NaCl.XSalsa20Poly1305.TryDecrypt(

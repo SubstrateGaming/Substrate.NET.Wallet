@@ -20,10 +20,15 @@ namespace Substrate.NET.Wallet.Keyring
         /// <exception cref="InvalidOperationException"></exception>
         public static ScryptResult FromBytes(byte[] data)
         {
-            var salt = data.SubArray(0, 32);
-            var N = new BigInteger(data.SubArray(32 + 0, 32 + 4));
-            var p = new BigInteger(data.SubArray(32 + 4, 32 + 8));
-            var r = new BigInteger(data.SubArray(32 + 8, 32 + 12));
+            var dataSpan = new Span<byte>(data);
+
+            // Extract salt directly using Span.Slice and convert to array
+            var salt = dataSpan.Slice(0, 32).ToArray();
+
+            // Convert slices for N, p, r directly to BigInteger using ReadOnlySpan
+            var N = new BigInteger(dataSpan.Slice(32 + 0, 4).ToArray());
+            var p = new BigInteger(dataSpan.Slice(32 + 4, 4).ToArray());
+            var r = new BigInteger(dataSpan.Slice(32 + 8, 4).ToArray());
 
             if (N != ScryptParam.Default.IterationCount || p != ScryptParam.Default.ThreadCount || r != ScryptParam.Default.BlockSize)
             {

@@ -7,6 +7,7 @@ using Substrate.NetApi;
 using Substrate.NetApi.Extensions;
 using Substrate.NetApi.Model.Types;
 using Substrate.NetApi.Sign;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -88,8 +89,10 @@ namespace Substrate.NET.Wallet.Test.Keyrings
             // Just to check
             // --
             var concatenated_2 = miniSecret_Ed25519Bytes.GetPair().ToHalfEd25519Bytes();
-            var publicKey_2 = concatenated_2.SubArray(Keys.SECRET_KEY_LENGTH, Keys.SECRET_KEY_LENGTH + Keys.PUBLIC_KEY_LENGTH);
-            var secretKey_2 = concatenated_2.SubArray(0, Keys.SECRET_KEY_LENGTH);
+            Span<byte> concatenatedSpan = concatenated_2.AsSpan();
+            var publicKey_2 = concatenatedSpan.Slice(Keys.SECRET_KEY_LENGTH, Keys.PUBLIC_KEY_LENGTH).ToArray();
+            var secretKey_2 = concatenatedSpan.Slice(0, Keys.SECRET_KEY_LENGTH).ToArray();
+
             var edBytes = miniSecret_Ed25519Bytes.ExpandToSecret().ToEd25519Bytes();
             Assert.That(edBytes, Is.EquivalentTo(secretKey_2));
             Assert.That(edBytes, Is.EquivalentTo(account_Ed25519Bytes.PrivateKey));
