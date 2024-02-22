@@ -1,5 +1,4 @@
-﻿using Substrate.NET.Wallet.Extensions;
-using Substrate.NetApi.Extensions;
+﻿using Substrate.NetApi.Extensions;
 using System;
 using System.Linq;
 using System.Numerics;

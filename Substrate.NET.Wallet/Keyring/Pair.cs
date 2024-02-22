@@ -1,5 +1,4 @@
 ﻿using Chaos.NaCl;
-using Substrate.NET.Wallet.Extensions;
 using Substrate.NetApi.Extensions;
 using Substrate.NetApi.Model.Types;
 using System;

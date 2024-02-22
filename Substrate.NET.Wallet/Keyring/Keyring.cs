@@ -1,6 +1,5 @@
 ﻿using Substrate.NET.Schnorrkel.Keys;
 using Substrate.NET.Wallet.Derivation;
-using Substrate.NET.Wallet.Extensions;
 using Substrate.NetApi;
 using Substrate.NetApi.Extensions;
 using Substrate.NetApi.Model.Types;

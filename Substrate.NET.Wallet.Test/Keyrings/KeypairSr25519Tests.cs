@@ -1,7 +1,6 @@
 ﻿using NUnit.Framework;
 using Substrate.NET.Schnorrkel;
 using Substrate.NET.Wallet.Derivation;
-using Substrate.NET.Wallet.Extensions;
 using Substrate.NET.Wallet.Keyring;
 using Substrate.NetApi;
 using Substrate.NetApi.Extensions;
