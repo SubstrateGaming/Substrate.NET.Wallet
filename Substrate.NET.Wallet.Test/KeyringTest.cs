@@ -117,33 +117,6 @@ namespace Substrate.NET.Wallet.Test
         }
 
         [Test]
-        public void DecodeAddress()
-        {
-            var keyring = new Substrate.NET.Wallet.Keyring.Keyring();
-            var publicKey = new byte[] { 16, 178, 46, 190, 137, 179, 33, 55, 11, 238, 141, 57, 213, 197, 212, 17, 218, 241, 232, 252, 145, 201, 209, 83, 64, 68, 89, 15, 31, 150, 110, 188 };
-
-            Assert.That(keyring.DecodeAddress("5CSbZ7wG456oty4WoiX6a1J88VUbrCXLhrKVJ9q95BsYH4TZ"), Is.EqualTo(publicKey));
-            Assert.That(keyring.DecodeAddress("CxDDSH8gS7jecsxaRL9Txf8H5kqesLXAEAEgp76Yz632J9M"), Is.EqualTo(publicKey));
-            Assert.That(keyring.DecodeAddress("1NthTCKurNHLW52mMa6iA8Gz7UFYW5UnM3yTSpVdGu4Th7h"), Is.EqualTo(publicKey));
-        }
-
-        [Test]
-        public void EncodeAddress()
-        {
-            var keyring = new Substrate.NET.Wallet.Keyring.Keyring();
-            var publicKey = new byte[] { 16, 178, 46, 190, 137, 179, 33, 55, 11, 238, 141, 57, 213, 197, 212, 17, 218, 241, 232, 252, 145, 201, 209, 83, 64, 68, 89, 15, 31, 150, 110, 188 };
-
-            keyring.Ss58Format = 42;
-            Assert.That(keyring.EncodeAddress(publicKey), Is.EqualTo("5CSbZ7wG456oty4WoiX6a1J88VUbrCXLhrKVJ9q95BsYH4TZ"));
-
-            keyring.Ss58Format = 2;
-            Assert.That(keyring.EncodeAddress(publicKey), Is.EqualTo("CxDDSH8gS7jecsxaRL9Txf8H5kqesLXAEAEgp76Yz632J9M"));
-
-            keyring.Ss58Format = 0;
-            Assert.That(keyring.EncodeAddress(publicKey), Is.EqualTo("1NthTCKurNHLW52mMa6iA8Gz7UFYW5UnM3yTSpVdGu4Th7h"));
-        }
-
-        [Test]
         [TestCase(NetApi.Model.Types.KeyType.Ed25519)]
         [TestCase(NetApi.Model.Types.KeyType.Sr25519)]
         public void GenerateNewAccount_SignAndVerify(NetApi.Model.Types.KeyType keyType)

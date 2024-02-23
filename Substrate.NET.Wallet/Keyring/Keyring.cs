@@ -18,22 +18,14 @@ namespace Substrate.NET.Wallet.Keyring
     public class Keyring
     {
         public const int NONCE_LENGTH = 24;
+
         public const int SCRYPT_LENGTH = 32 + 3 * 4;
+        
         public const short DEFAULT_SS58 = 42;
 
         public IList<Wallet> Wallets { get; private set; } = new List<Wallet>();
+
         public short Ss58Format { get; set; } = DEFAULT_SS58;
-
-        public byte[] DecodeAddress(string address)
-        {
-            short network;
-            return Utils.GetPublicKeyFrom(address, out network);
-        }
-
-        public string EncodeAddress(byte[] publicKey)
-        {
-            return Utils.GetAddressFrom(publicKey, Ss58Format);
-        }
 
         #region Get methods
 
