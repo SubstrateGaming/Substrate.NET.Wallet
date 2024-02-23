@@ -1,7 +1,5 @@
-﻿using Substrate.NET.Schnorrkel;
-using Substrate.NET.Schnorrkel.Keys;
+﻿using Substrate.NET.Schnorrkel.Keys;
 using Substrate.NET.Wallet.Derivation;
-using Substrate.NET.Wallet.Extensions;
 using Substrate.NetApi;
 using Substrate.NetApi.Model.Meta;
 using Substrate.NetApi.Model.Types;
@@ -127,31 +125,39 @@ namespace Substrate.NET.Wallet.Keyring
         /// <exception cref="NotImplementedException"></exception>
         private static Account CreateDerive(KeyType keyType, DeriveJunction path, Account pair)
         {
-            var keyPair = KeyPair.FromHalfEd25519Bytes(pair.PrivateKey.Concat(pair.Bytes).ToArray());
+            // Construct a KeyPair from the concatenation of PrivateKey and Bytes, transformed into an array.
+            KeyPair keyPair = KeyPair.FromHalfEd25519Bytes(pair.PrivateKey.Concat(pair.Bytes).ToArray());
 
             switch (keyType)
             {
                 case KeyType.Sr25519:
-                    var res = path.IsHard ?
-                        Sr25519DeriveHard(keyPair, path.ChainCode) :
-                        Sr25519DeriveSoft(keyPair, path.ChainCode);
+                    // Derivation might return a byte array, assumed to be done here.
+                    byte[] res = path.IsHard ?
+                                Sr25519DeriveHard(keyPair, path.ChainCode) :
+                                Sr25519DeriveSoft(keyPair, path.ChainCode);
 
-                    return Account.Build(keyType,
-                        res.SubArray(0, Keys.SECRET_KEY_LENGTH),
-                        res.SubArray(Keys.SECRET_KEY_LENGTH, Keys.SECRET_KEY_LENGTH + Keys.PUBLIC_KEY_LENGTH));
+                    // Convert the result to Span<byte> for efficient slicing
+                    Span<byte> resSpan = new Span<byte>(res);
+
+                    // Use Span.Slice for secret and public key portions
+                    var secretKeySpan = resSpan.Slice(0, Keys.SECRET_KEY_LENGTH).ToArray();
+                    var publicKeySpan = resSpan.Slice(Keys.SECRET_KEY_LENGTH, Keys.PUBLIC_KEY_LENGTH).ToArray();
+
+                    // Account.Build presumably accepts byte[] for keys, so .ToArray() conversion is used
+                    return Account.Build(keyType, secretKeySpan, publicKeySpan);
 
                 case KeyType.Ed25519:
-
                     if (!path.IsHard)
                     {
-                        throw new InvalidOperationException($"Soft derivation paths are not allowed on {keyType}");
+                        throw new InvalidOperationException($"Soft derivation paths are not allowed on {keyType}.");
                     }
 
-                    return Account.FromSeed(keyType,
-                        Ed25519DeriveHard(pair.PrivateKey, path.ChainCode));
-            }
+                    // Assuming Ed25519DeriveHard returns a byte array suitable for Account.FromSeed
+                    return Account.FromSeed(keyType, Ed25519DeriveHard(pair.PrivateKey, path.ChainCode));
 
-            throw new NotImplementedException();
+                default:
+                    throw new NotImplementedException("This key type is not implemented.");
+            }
         }
 
         /// <summary>
@@ -213,14 +219,14 @@ namespace Substrate.NET.Wallet.Keyring
         }
 
         /// <summary>
-        ///
+        /// Ed25519 derive
         /// </summary>
         /// <param name="secretKey">64 bytes private key + nonce</param>
         /// <param name="chainCode"></param>
         /// <returns></returns>
         public static byte[] Ed25519DeriveHard(byte[] secretKey, byte[] chainCode)
         {
-            var seed = secretKey.SubArray(0, 32);
+            var seed = new Span<byte>(secretKey, 0, 32).ToArray();
             var HDKS = DeriveJunction.CompactAddLength(System.Text.Encoding.UTF8.GetBytes("Ed25519HDKD"));
 
             var all = HDKS.Concat(seed).Concat(chainCode).ToArray();

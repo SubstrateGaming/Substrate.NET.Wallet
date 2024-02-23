@@ -1,6 +1,5 @@
 ﻿using Substrate.NET.Schnorrkel.Keys;
 using Substrate.NET.Wallet.Derivation;
-using Substrate.NET.Wallet.Extensions;
 using Substrate.NetApi;
 using Substrate.NetApi.Extensions;
 using Substrate.NetApi.Model.Types;
@@ -13,46 +12,20 @@ using System.Runtime.CompilerServices;
 
 namespace Substrate.NET.Wallet.Keyring
 {
-    public class KeyringAddress
-    {
-        public KeyType KeyType { get; set; }
-        public Func<byte[], short, string> ToSS58 { get; set; }
-
-        public KeyringAddress(KeyType keyType)
-        {
-            KeyType = keyType;
-            ToSS58 = Utils.GetAddressFrom;
-        }
-
-        public KeyringAddress(KeyType keyType, Func<byte[], short, string> toSS58)
-        {
-            KeyType = keyType;
-            ToSS58 = toSS58;
-        }
-    }
-
     /// <summary>
     /// Keyring is a cryptographic key management tool or library used to manage cryptographic keys and perform key-related operations, such as key generation, storage, and signing.
     /// </summary>
     public class Keyring
     {
         public const int NONCE_LENGTH = 24;
+
         public const int SCRYPT_LENGTH = 32 + 3 * 4;
+        
         public const short DEFAULT_SS58 = 42;
 
         public IList<Wallet> Wallets { get; private set; } = new List<Wallet>();
+
         public short Ss58Format { get; set; } = DEFAULT_SS58;
-
-        public byte[] DecodeAddress(string address)
-        {
-            short network;
-            return Utils.GetPublicKeyFrom(address, out network);
-        }
-
-        public string EncodeAddress(byte[] publicKey)
-        {
-            return Utils.GetAddressFrom(publicKey, Ss58Format);
-        }
 
         #region Get methods
 
@@ -80,8 +53,7 @@ namespace Substrate.NET.Wallet.Keyring
             var publicKey = Utils.GetPublicKeyFrom(address);
 
             var keyringPair = Pair.CreatePair(
-                new KeyringAddress(keyType),
-                Account.Build(keyType,null, publicKey),
+                Account.Build(keyType, null, publicKey),
                 meta, encoded, encryptedEncoding, Ss58Format);
 
             AddWallet(keyringPair);
@@ -118,7 +90,7 @@ namespace Substrate.NET.Wallet.Keyring
 
         public Wallet AddFromSeed(byte[] seed, Meta meta, KeyType keyType)
         {
-            var pair = Pair.CreatePair(new KeyringAddress(keyType), Account.FromSeed(keyType, seed), meta, null, null, Ss58Format);
+            var pair = Pair.CreatePair(Account.FromSeed(keyType, seed), meta, null, null, Ss58Format);
             AddWallet(pair);
 
             return pair;
@@ -145,7 +117,6 @@ namespace Substrate.NET.Wallet.Keyring
                 Convert.FromBase64String(walletEncryption.Encoded);
 
             return Pair.CreatePair(
-                new KeyringAddress(keyType),
                 Account.Build(keyType, null, publicKey),
                 walletEncryption.Meta, encoded, encryptedEncoding, Ss58Format);
         }
@@ -156,7 +127,7 @@ namespace Substrate.NET.Wallet.Keyring
 
             var derivedPair = Uri.KeyFromPath(Account.FromSeed(keyType, seed), extract.Path, keyType);
 
-            return Pair.CreatePair(new KeyringAddress(keyType), derivedPair, meta, null, null, Ss58Format);
+            return Pair.CreatePair(derivedPair, meta, null, null, Ss58Format);
         }
 
         internal static (KeyExtractResult, byte[]) CreateSeedFromUri(string uri)
@@ -222,7 +193,7 @@ namespace Substrate.NET.Wallet.Keyring
                 {
                     var scryptRes = Scrypt.FromBytes(encoded);
                     passwordBytes = Scrypt.ScryptEncode(password, scryptRes.Salt, scryptRes.Param).Password;
-                    encrypted = encrypted.SubArray(SCRYPT_LENGTH);
+                    encrypted = encrypted.AsSpan().Slice(SCRYPT_LENGTH).ToArray();
                 }
 
                 encoded = Chaos.NaCl.XSalsa20Poly1305.TryDecrypt(
@@ -237,7 +208,7 @@ namespace Substrate.NET.Wallet.Keyring
             return encoded;
         }
 
-        public static PairInfo KeyPairFromSeed(KeyType keyType, byte[] seed)
+        public static Account KeyPairFromSeed(KeyType keyType, byte[] seed)
         {
             if (seed.Length != 32)
                 throw new InvalidOperationException($"Seed is not 32 bytes (currently {seed.Length})");
@@ -246,11 +217,11 @@ namespace Substrate.NET.Wallet.Keyring
             {
                 case KeyType.Ed25519:
                     Chaos.NaCl.Ed25519.KeyPairFromSeed(out byte[] pubKey, out byte[] priKey, seed);
-                    return new PairInfo(pubKey, priKey);
+                    return Account.Build(keyType, priKey, pubKey);
 
                 case KeyType.Sr25519:
                     var miniSecret = new MiniSecret(seed, ExpandMode.Ed25519);
-                    return new PairInfo(miniSecret.ExpandToPublic().Key, miniSecret.ExpandToSecret().ToEd25519Bytes());
+                    return Account.Build(keyType, miniSecret.ExpandToSecret().ToEd25519Bytes(), miniSecret.ExpandToPublic().Key);
 
                 default:
                     throw new NotImplementedException($"KeyType {keyType} isn't implemented!");

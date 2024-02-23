@@ -1,6 +1,5 @@
 ﻿using Serilog;
 using Substrate.NET.Schnorrkel;
-using Substrate.NET.Wallet.Extensions;
 using Substrate.NET.Wallet.Keyring;
 using Substrate.NetApi;
 using Substrate.NetApi.Extensions;
@@ -227,7 +226,7 @@ namespace Substrate.NET.Wallet
         /// <returns></returns>
         public byte[] Recode(string password)
         {
-            return Pair.EncodePair(password, Account.Clone());
+            return Pair.EncodePair(password, Account);
         }
 
         /// <summary>
@@ -257,9 +256,9 @@ namespace Substrate.NET.Wallet
                 throw new InvalidOperationException($"Soft derivation paths are not allowed on {KeyType}");
             }
 
-            var derived = Keyring.Uri.KeyFromPath(Account.Clone(), res.Path, KeyType);
+            var derived = Keyring.Uri.KeyFromPath(Account, res.Path, KeyType);
 
-            return Pair.CreatePair(new KeyringAddress(KeyType), derived, Meta, null, EncryptedEncoding, Keyring.Keyring.DEFAULT_SS58);
+            return Pair.CreatePair(derived, Meta, null, EncryptedEncoding, Keyring.Keyring.DEFAULT_SS58);
         }
 
         /// <summary>
