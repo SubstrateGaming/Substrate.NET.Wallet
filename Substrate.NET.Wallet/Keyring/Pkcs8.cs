@@ -18,17 +18,7 @@ namespace Substrate.NET.Wallet.Keyring
         /// <returns></returns>
         public static Account Decode(string password, byte[] encoded, List<WalletJson.EncryptedJsonEncoding> encryptedEncoding)
         {
-            var decoded = Pair.DecodePair(password, encoded, encryptedEncoding);
-
-            if (decoded.SecretKey.Length == 64)
-            {
-                return Account.Build(KeyType.Sr25519, decoded.SecretKey, decoded.PublicKey);
-            }
-            else
-            {
-                Chaos.NaCl.Ed25519.KeyPairFromSeed(out byte[] publicKey, out byte[] privateKey, encoded);
-                return Account.Build(KeyType.Ed25519, privateKey, publicKey);
-            }
+            return Pair.DecodePair(password, encoded, encryptedEncoding);
         }
 
         /// <summary>

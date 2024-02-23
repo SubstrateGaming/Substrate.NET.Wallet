@@ -236,7 +236,7 @@ namespace Substrate.NET.Wallet.Keyring
             return encoded;
         }
 
-        public static PairInfo KeyPairFromSeed(KeyType keyType, byte[] seed)
+        public static Account KeyPairFromSeed(KeyType keyType, byte[] seed)
         {
             if (seed.Length != 32)
                 throw new InvalidOperationException($"Seed is not 32 bytes (currently {seed.Length})");
@@ -245,11 +245,11 @@ namespace Substrate.NET.Wallet.Keyring
             {
                 case KeyType.Ed25519:
                     Chaos.NaCl.Ed25519.KeyPairFromSeed(out byte[] pubKey, out byte[] priKey, seed);
-                    return new PairInfo(pubKey, priKey);
+                    return Account.Build(keyType, priKey, pubKey);
 
                 case KeyType.Sr25519:
                     var miniSecret = new MiniSecret(seed, ExpandMode.Ed25519);
-                    return new PairInfo(miniSecret.ExpandToPublic().Key, miniSecret.ExpandToSecret().ToEd25519Bytes());
+                    return Account.Build(keyType, miniSecret.ExpandToSecret().ToEd25519Bytes(), miniSecret.ExpandToPublic().Key);
 
                 default:
                     throw new NotImplementedException($"KeyType {keyType} isn't implemented!");

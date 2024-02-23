@@ -208,10 +208,10 @@ namespace Substrate.NET.Wallet.Test
             var expected = Utils.HexToByteArray("46ebddef8cd9bb167dc30878d7113b7e168e6f0646beffd77d69d39bad76b47a");
 
             var keyPair = Keyring.Keyring.KeyPairFromSeed(NetApi.Model.Types.KeyType.Sr25519, seed);
-            Assert.That(keyPair.PublicKey.Length, Is.EqualTo(Keys.PUBLIC_KEY_LENGTH));
-            Assert.That(keyPair.SecretKey.Length, Is.EqualTo(Keys.SECRET_KEY_LENGTH));
+            Assert.That(keyPair.Bytes.Length, Is.EqualTo(Keys.PUBLIC_KEY_LENGTH));
+            Assert.That(keyPair.PrivateKey.Length, Is.EqualTo(Keys.SECRET_KEY_LENGTH));
 
-            Assert.That(keyPair.PublicKey, Is.EqualTo(expected));
+            Assert.That(keyPair.Bytes, Is.EqualTo(expected));
         }
     }
 }

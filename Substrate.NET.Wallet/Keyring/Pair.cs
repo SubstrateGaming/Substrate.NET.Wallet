@@ -7,35 +7,6 @@ using System.Linq;
 
 namespace Substrate.NET.Wallet.Keyring
 {
-    public class DecodeResult : PairInfo
-    {
-        public DecodeResult(byte[] publicKey, byte[] privateKey, byte[] seed, byte[] secretKey) : base(publicKey, secretKey)
-        {
-            PrivateKey = privateKey;
-            Seed = seed;
-        }
-
-        public byte[] PrivateKey { get; }
-        public byte[] Seed { get; }
-    }
-
-    public class PairInfo
-    {
-        public PairInfo(byte[] publicKey) : this(publicKey, null)
-        {
-        }
-
-        public PairInfo(byte[] publicKey, byte[] secretKey)
-        {
-            PublicKey = publicKey;
-            SecretKey = secretKey;
-        }
-
-        public byte[] PublicKey { get; set; }
-        public byte[] SecretKey { get; set; }
-
-    }
-
     public static class Pair
     {
         public const int PUB_LENGTH = 32;
@@ -81,7 +52,7 @@ namespace Substrate.NET.Wallet.Keyring
         /// <param name="encryptionType"></param>
         /// <returns></returns>
         /// <exception cref="InvalidOperationException"></exception>
-        public static PairInfo DecodePair(string password, byte[] encoded, List<WalletJson.EncryptedJsonEncoding> encryptionType)
+        public static Account DecodePair(string password, byte[] encoded, List<WalletJson.EncryptedJsonEncoding> encryptionType)
         {
             var decrypted = Keyring.JsonDecryptData(password, encoded, encryptionType);
             var decryptedSpan = new Span<byte>(decrypted); // Convert the decrypted byte array to a Span<byte>
@@ -101,9 +72,24 @@ namespace Substrate.NET.Wallet.Keyring
             var publicOffset = offset + PKCS8_DIVIDER.Length;
             var publicKey = decryptedSpan.Slice(publicOffset, PUB_LENGTH).ToArray(); // Convert span slice to array
 
-            return new PairInfo(publicKey, secretKey);
+            if (secretKey.Length == 64)
+            {
+                return Account.Build(KeyType.Sr25519, secretKey, publicKey);
+            }
+            else
+            {
+                Chaos.NaCl.Ed25519.KeyPairFromSeed(out publicKey, out secretKey, encoded);
+                return Account.Build(KeyType.Ed25519, secretKey, publicKey);
+            }
         }
 
+        /// <summary>
+        /// Encode a keypair into a byte array
+        /// </summary>
+        /// <param name="password"></param>
+        /// <param name="pair"></param>
+        /// <returns></returns>
+        /// <exception cref="InvalidOperationException"></exception>
         public static byte[] EncodePair(string password, Account pair)
         {
             if (IsLocked(pair.PrivateKey))
@@ -131,6 +117,15 @@ namespace Substrate.NET.Wallet.Keyring
                 .ToArray();
         }
 
+        /// <summary>
+        /// Transform a keypair into a JSON representation
+        /// </summary>
+        /// <param name="keyType"></param>
+        /// <param name="address"></param>
+        /// <param name="meta"></param>
+        /// <param name="encoded"></param>
+        /// <param name="isEncrypted"></param>
+        /// <returns></returns>
         public static WalletFile ToJsonPair(KeyType keyType, string address, Meta meta, byte[] encoded, bool isEncrypted)
         {
             return new WalletFile()
