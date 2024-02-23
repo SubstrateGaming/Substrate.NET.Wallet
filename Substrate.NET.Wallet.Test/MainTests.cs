@@ -69,7 +69,6 @@ namespace Substrate.NET.Wallet.Test
             {
                 var keyType = KeyType.Sr25519;
                 return Pair.CreatePair(
-                    new KeyringAddress(keyType),
                     Account.Build(keyType, 
                         Utils.HexToByteArray(SecretKey), 
                         Utils.HexToByteArray(PublickKey)));

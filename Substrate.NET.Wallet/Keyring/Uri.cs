@@ -1,5 +1,4 @@
-﻿using Substrate.NET.Schnorrkel;
-using Substrate.NET.Schnorrkel.Keys;
+﻿using Substrate.NET.Schnorrkel.Keys;
 using Substrate.NET.Wallet.Derivation;
 using Substrate.NetApi;
 using Substrate.NetApi.Model.Meta;
@@ -160,7 +159,6 @@ namespace Substrate.NET.Wallet.Keyring
                     throw new NotImplementedException("This key type is not implemented.");
             }
         }
-
 
         /// <summary>
         /// Sr25519 derive hard

@@ -12,24 +12,6 @@ using System.Runtime.CompilerServices;
 
 namespace Substrate.NET.Wallet.Keyring
 {
-    public class KeyringAddress
-    {
-        public KeyType KeyType { get; set; }
-        public Func<byte[], short, string> ToSS58 { get; set; }
-
-        public KeyringAddress(KeyType keyType)
-        {
-            KeyType = keyType;
-            ToSS58 = Utils.GetAddressFrom;
-        }
-
-        public KeyringAddress(KeyType keyType, Func<byte[], short, string> toSS58)
-        {
-            KeyType = keyType;
-            ToSS58 = toSS58;
-        }
-    }
-
     /// <summary>
     /// Keyring is a cryptographic key management tool or library used to manage cryptographic keys and perform key-related operations, such as key generation, storage, and signing.
     /// </summary>
@@ -79,8 +61,7 @@ namespace Substrate.NET.Wallet.Keyring
             var publicKey = Utils.GetPublicKeyFrom(address);
 
             var keyringPair = Pair.CreatePair(
-                new KeyringAddress(keyType),
-                Account.Build(keyType,null, publicKey),
+                Account.Build(keyType, null, publicKey),
                 meta, encoded, encryptedEncoding, Ss58Format);
 
             AddWallet(keyringPair);
@@ -117,7 +98,7 @@ namespace Substrate.NET.Wallet.Keyring
 
         public Wallet AddFromSeed(byte[] seed, Meta meta, KeyType keyType)
         {
-            var pair = Pair.CreatePair(new KeyringAddress(keyType), Account.FromSeed(keyType, seed), meta, null, null, Ss58Format);
+            var pair = Pair.CreatePair(Account.FromSeed(keyType, seed), meta, null, null, Ss58Format);
             AddWallet(pair);
 
             return pair;
@@ -144,7 +125,6 @@ namespace Substrate.NET.Wallet.Keyring
                 Convert.FromBase64String(walletEncryption.Encoded);
 
             return Pair.CreatePair(
-                new KeyringAddress(keyType),
                 Account.Build(keyType, null, publicKey),
                 walletEncryption.Meta, encoded, encryptedEncoding, Ss58Format);
         }
@@ -155,7 +135,7 @@ namespace Substrate.NET.Wallet.Keyring
 
             var derivedPair = Uri.KeyFromPath(Account.FromSeed(keyType, seed), extract.Path, keyType);
 
-            return Pair.CreatePair(new KeyringAddress(keyType), derivedPair, meta, null, null, Ss58Format);
+            return Pair.CreatePair(derivedPair, meta, null, null, Ss58Format);
         }
 
         internal static (KeyExtractResult, byte[]) CreateSeedFromUri(string uri)

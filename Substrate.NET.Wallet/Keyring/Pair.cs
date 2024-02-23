@@ -1,4 +1,5 @@
 ﻿using Chaos.NaCl;
+using Substrate.NetApi;
 using Substrate.NetApi.Extensions;
 using Substrate.NetApi.Model.Types;
 using System;
@@ -26,22 +27,22 @@ namespace Substrate.NET.Wallet.Keyring
             WalletJson.EncryptedToString(WalletJson.EncryptedJsonEncoding.Xsalsa20Poly1305),
         };
 
-        public static Wallet CreatePair(KeyringAddress setup, Account account)
-            => CreatePair(setup, account, meta: null, encoded: null, encryptedEncoding: null, ss58Format: 42);
+        public static Wallet CreatePair(Account account)
+            => CreatePair(account, meta: null, encoded: null, encryptedEncoding: null, ss58Format: 42);
 
         /// <summary>
-        /// https://github.com/polkadot-js/common/blob/master/packages/keyring/src/pair/index.ts#L89
+        /// Create a new keypair
         /// </summary>
         /// <param name="setup"></param>
-        /// <param name="publicKey"></param>
-        /// <param name="secretKey"></param>
+        /// <param name="account"></param>
         /// <param name="meta"></param>
-        /// <param name="decoded"></param>
+        /// <param name="encoded"></param>
         /// <param name="encryptedEncoding"></param>
+        /// <param name="ss58Format"></param>
         /// <returns></returns>
-        public static Wallet CreatePair(KeyringAddress setup, Account account, Meta meta, byte[] encoded, List<WalletJson.EncryptedJsonEncoding> encryptedEncoding, short ss58Format)
+        public static Wallet CreatePair(Account account, Meta meta, byte[] encoded, List<WalletJson.EncryptedJsonEncoding> encryptedEncoding, short ss58Format)
         {
-            return new Wallet(setup.ToSS58(account.Bytes, ss58Format), encoded, meta, account.Bytes, account.PrivateKey, setup.KeyType, encryptedEncoding);
+            return new Wallet(Utils.GetAddressFrom(account.Bytes, ss58Format), encoded, meta, account.Bytes, account.PrivateKey, account.KeyType, encryptedEncoding);
         }
 
         /// <summary>

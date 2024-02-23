@@ -258,7 +258,7 @@ namespace Substrate.NET.Wallet
 
             var derived = Keyring.Uri.KeyFromPath(Account, res.Path, KeyType);
 
-            return Pair.CreatePair(new KeyringAddress(KeyType), derived, Meta, null, EncryptedEncoding, Keyring.Keyring.DEFAULT_SS58);
+            return Pair.CreatePair(derived, Meta, null, EncryptedEncoding, Keyring.Keyring.DEFAULT_SS58);
         }
 
         /// <summary>
